@@ -17,14 +17,120 @@ db = initialize_firebase()
 # Estructura de progreso por defecto
 DEFAULT_PROGRESS = {
     "sintaxis_basica": {
-        "variables": False,
-        "tipos_datos": False,
-        "operadores_aritmeticos": False
+        "variables": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "tipos_datos": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "operadores_aritmeticos": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        }
     },
     "estructuras_control": {
-        "condicionales": False,
-        "bucles": False,
-        "controles_flujo": False
+        "condicionales": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "bucles": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "control_flujo": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        }
+    },
+    "funciones": {
+        "definicion_declaracion": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "funciones_anonimas_flecha": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "parametros_retorno": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "alcance_variables": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "recursion": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "closures": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        }
+    },
+    "objetos_arreglos": {
+        "introduccion_objetos": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "metodos_propiedades_objetos": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "creacion_manipulacion_arreglos": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "metodos_arreglos": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "desestructuracion_objetos": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        },
+        "desestructuracion_arreglos": {
+            "primer_ejercicio": False,
+            "segundo_ejercicio": False,
+            "tercer_ejercicio": False,
+            "cuarto_ejercicio": False
+        }
     }
 }
 
