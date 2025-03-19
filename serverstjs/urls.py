@@ -1,0 +1,31 @@
+"""
+URL configuration for serverstjs project.
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/5.1/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
+from django.contrib import admin
+from django.urls import path
+from evaluador.views import evaluar_codigo
+from serverstjs.firestore import *
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('evaluar_codigo/', evaluar_codigo),
+    path('registro/', register_user, name='registro'),
+    path('login_google/', login_with_google, name='login_google'),
+    path('login_user/', login_user, name='login_user'),
+    path('get_progress/', get_progress, name='get_progress'),
+    path('update_progress/', update_progress, name='update_progress'),
+]
