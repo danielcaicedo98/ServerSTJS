@@ -2,6 +2,7 @@ import google.generativeai as genai
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+import re
 
 # Configurar la API de Google Generative AI
 genai.configure(api_key='AIzaSyBHjc9tKEPxVUIlqmH2LJsK-MjJRFcQIzI')
@@ -9,6 +10,11 @@ genai.configure(api_key='AIzaSyBHjc9tKEPxVUIlqmH2LJsK-MjJRFcQIzI')
 # Definir el modelo a utilizar
 version = 'models/gemini-1.5-flash'
 model = genai.GenerativeModel(version)
+
+def limpiar_texto(texto):
+                # Eliminar comillas dobles, comillas simples y backticks
+                texto_limpio = re.sub(r"[\"'`]", "", texto)
+                return texto_limpio
 
 @csrf_exempt
 def evaluar_codigo(request):
@@ -32,7 +38,7 @@ def evaluar_codigo(request):
                 4. **Explicar claramente en unas pocas líneas cuál es el error del estudiante**  
                 5. **La salida debe ser solamente una lista donde un elemento de la lista corresponda a un error, si hay 2 errores, entonces dos elementos, si hay tres errores entonces tres elementos de la lista**  
                 6. **La salida debe hablarle directamente al estudiante, el cual se llama {nombre_estudiante}**  
-                7. **Cada elemento de la lista debe iniciar con ***  
+                7. **Cada elemento de la lista debe iniciar con ** y terminar en un salto de línea**                 
                 8. **Evita explicaciones adicionales**  
                 ---  
                 ### **Ejercicio a Evaluar**  
@@ -44,8 +50,10 @@ def evaluar_codigo(request):
                 {codigo_estudiante}  
                 ```"""
             response = model.generate_content(prompt)
+            formated_text = limpiar_texto(response.text)
+            
             # print(response.text)
-            return JsonResponse({"respuesta": response.text})
+            return JsonResponse({"respuesta": formated_text})
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
