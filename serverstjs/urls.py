@@ -16,13 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from evaluador.views import evaluar_codigo
+from evaluador.views import evaluar_codigo, free_chat, free_conversation
 from serverstjs.firestore import *
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('evaluar_codigo/', evaluar_codigo),
+    path('free_chat/', free_chat, name='free_chat'),
+    path('free_conversation/', free_conversation, name='free_conversation'),
     path('registro/', register_user, name='registro'),
     path('login_google/', login_with_google, name='login_google'),
     path('login_user/', login_user, name='login_user'),

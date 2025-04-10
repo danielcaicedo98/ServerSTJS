@@ -35,11 +35,11 @@ def evaluar_codigo(request):
                 1. **Analizar el código** proporcionado y determinar si cumple con los requisitos del ejercicio.  
                 2. **Identificar errores sintácticos, semánticos o lógicos**, explicando por qué ocurren y cómo corregirlos.  
                 3. **La corrección debe ser unas cuantas líneas**  
-                4. **Explicar claramente en unas pocas líneas cuál es el error del estudiante**  
+                4. **Explicarle al estudiante claramente en unas pocas líneas cuál es el error**  
                 5. **La salida debe ser solamente una lista donde un elemento de la lista corresponda a un error, si hay 2 errores, entonces dos elementos, si hay tres errores entonces tres elementos de la lista**  
-                6. **La salida debe hablarle directamente al estudiante, el cual se llama {nombre_estudiante}**  
+                6. **usa un tono amigable para el estudiante**  
                 7. **Cada elemento de la lista debe iniciar con ** y terminar en un salto de línea**                 
-                8. **Evita explicaciones adicionales**  
+                8. **Evita explicaciones adicionales**                
                 ---  
                 ### **Ejercicio a Evaluar**  
                 **Descripción:**  
@@ -54,6 +54,48 @@ def evaluar_codigo(request):
             
             # print(response.text)
             return JsonResponse({"respuesta": formated_text})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+@csrf_exempt
+def free_chat(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            mensaje = data.get("mensaje", "")
+
+            if not mensaje:
+                return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
+
+            response = model.generate_content(mensaje)
+            respuesta_limpia = limpiar_texto(response.text)
+
+            return JsonResponse({"respuesta": respuesta_limpia})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+@csrf_exempt
+def free_conversation(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            mensaje = data.get("mensaje", "")
+            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional
+
+            if not mensaje:
+                return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
+
+            chat = model.start_chat(history=historial)
+            response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas y que el texto pueda ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
+
+            return JsonResponse({
+                "respuesta": response.text                
+            })
+
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
