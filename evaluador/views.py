@@ -3,7 +3,11 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 import re
-
+import uuid
+import asyncio
+from .text_to_speech import convert_text_to_speech
+from .rhubarb_lyp_sinc import get_phonemes
+from .files import audio_file_to_base64, read_json_transcript
 # Configurar la API de Google Generative AI
 genai.configure(api_key='AIzaSyBHjc9tKEPxVUIlqmH2LJsK-MjJRFcQIzI')
 
@@ -83,8 +87,9 @@ def free_conversation(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            mensaje = data.get("mensaje", "")
+            mensaje = data.get("message", "")
             historial = data.get("historial", [])  # <- Lista de mensajes previos opcional
+            
 
             if not mensaje:
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
@@ -98,4 +103,114 @@ def free_conversation(request):
 
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+def free_conversation(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            mensaje = data.get("message", "")
+            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional
+            
+
+            if not mensaje:
+                return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
+
+            chat = model.start_chat(history=historial)
+            response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas y que el texto pueda ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
+
+            return JsonResponse({
+                "respuesta": response.text                
+            })
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+@csrf_exempt
+async def talking_chat(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            mensaje = data.get("message", "")
+            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional
+            
+
+            if not mensaje:
+                return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
+
+            chat = model.start_chat(history=historial)
+            response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas y que el texto pueda ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
+            respuesta_limpia = limpiar_texto(response.text)
+
+            unique_id = str(uuid.uuid4())
+            file_name = f"mensaje-{unique_id}"
+            audio_file_name = f"./audios/{file_name}.mp3"  
+            
+            await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
+            await get_phonemes(file_name)
+            audio = await audio_file_to_base64(f"audios/{file_name}.wav")
+            lypsinc = await read_json_transcript(f"audios/{file_name}.json")
+            
+            messages = [
+                {
+                    "text": "Hey there... How was your day?",
+                    "audio": audio,
+                    "lipsync": lypsinc,
+                    "facialExpression": "default",
+                    "animation": "TalkingOne",
+                }
+            ]
+
+            return JsonResponse({"messages":messages})
+        except Exception as error:
+            if hasattr(error, 'response') and getattr(error.response, 'status', None) == 429:
+                pass
+            else:            
+                return JsonResponse({"error": str(error)}, status=500)
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+
+# @csrf_exempt
+# async def talking_chat(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            mensaje = data.get("message", "")
+
+            if not mensaje:
+                return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
+            
+             
+            
+            response = model.generate_content(mensaje)
+            respuesta_limpia = limpiar_texto(response.text)
+            
+            unique_id = str(uuid.uuid4())
+            file_name = f"mensaje-{unique_id}"
+            audio_file_name = f"./audios/{file_name}.mp3"  
+            
+            await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
+            await get_phonemes(file_name)
+            audio = await audio_file_to_base64(f"audios/{file_name}.wav")
+            lypsinc = await read_json_transcript(f"audios/{file_name}.json")
+            
+            messages = [
+                {
+                    "text": "Hey there... How was your day?",
+                    "audio": audio,
+                    "lipsync": lypsinc,
+                    "facialExpression": "smile",
+                    "animation": "TalkingOne",
+                }
+            ]
+
+            return JsonResponse({"messages":messages})
+        except Exception as error:
+            if hasattr(error, 'response') and getattr(error.response, 'status', None) == 429:
+                pass
+            else:            
+                return JsonResponse({"error": str(error)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
