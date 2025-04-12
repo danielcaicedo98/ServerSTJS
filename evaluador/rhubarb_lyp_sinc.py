@@ -22,7 +22,7 @@ async def get_phonemes(message):
         # await exec_command(f"ffmpeg -y -i ../audios/{message}.mp3 ../audios/{message}.wav")
 
         # Ejecutar Rhubarb para generar el archivo .json
-        ruta_rhubarb = Path("./rhubarb/rhubarb.exe").resolve()
+        ruta_rhubarb = Path("./rhubarb_linux/rhubarb").resolve()
         await exec_command(
             f'"{ruta_rhubarb}" -f json -o ./audios/{message}.json ./audios/{message}.wav -r phonetic'
         )

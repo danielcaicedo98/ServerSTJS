@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "soundFile": "C:\\Users\\danie\\OneDrive\\Escritorio\\tesis\\ServerSTJS\\serverstjs\\audios\\mensaje-41ca0f4e-bfe8-4b04-afd7-d3d18be9bfd3.wav",
+    "duration": 4.25
+  },
+  "mouthCues": [
+    { "start": 0.00, "end": 0.07, "value": "X" },
+    { "start": 0.07, "end": 0.25, "value": "C" },
+    { "start": 0.25, "end": 0.33, "value": "A" },
+    { "start": 0.33, "end": 0.67, "value": "B" },
+    { "start": 0.67, "end": 1.30, "value": "X" },
+    { "start": 1.30, "end": 1.70, "value": "B" },
+    { "start": 1.70, "end": 1.77, "value": "F" },
+    { "start": 1.77, "end": 1.85, "value": "A" },
+    { "start": 1.85, "end": 1.95, "value": "C" },
+    { "start": 1.95, "end": 2.02, "value": "B" },
+    { "start": 2.02, "end": 2.16, "value": "C" },
+    { "start": 2.16, "end": 2.23, "value": "F" },
+    { "start": 2.23, "end": 2.30, "value": "B" },
+    { "start": 2.30, "end": 2.37, "value": "C" },
+    { "start": 2.37, "end": 2.65, "value": "B" },
+    { "start": 2.65, "end": 3.30, "value": "X" },
+    { "start": 3.30, "end": 3.40, "value": "B" },
+    { "start": 3.40, "end": 3.47, "value": "C" },
+    { "start": 3.47, "end": 3.68, "value": "B" },
+    { "start": 3.68, "end": 4.25, "value": "X" }
+  ]
+}
