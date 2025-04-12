@@ -88,31 +88,7 @@ def free_conversation(request):
         try:
             data = json.loads(request.body)
             mensaje = data.get("message", "")
-            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional
-            
-
-            if not mensaje:
-                return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
-
-            chat = model.start_chat(history=historial)
-            response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas y que el texto pueda ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
-
-            return JsonResponse({
-                "respuesta": response.text                
-            })
-
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-    return JsonResponse({"error": "Método no permitido"}, status=405)
-
-
-def free_conversation(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            mensaje = data.get("message", "")
-            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional
-            
+            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional           
 
             if not mensaje:
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
@@ -134,9 +110,7 @@ async def talking_chat(request):
         try:
             data = json.loads(request.body)
             mensaje = data.get("message", "")
-            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional
-            
-
+            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional    
             if not mensaje:
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
@@ -155,7 +129,7 @@ async def talking_chat(request):
             
             messages = [
                 {
-                    "text": "Hey there... How was your day?",
+                    "text": respuesta_limpia,
                     "audio": audio,
                     "lipsync": lypsinc,
                     "facialExpression": "default",

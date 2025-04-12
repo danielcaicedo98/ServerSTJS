@@ -10,7 +10,7 @@ async def convert_text_to_speech(text, file_name):
     engine = pyttsx3.init()
     rate = engine.getProperty('rate')   # getting details of current speaking rate
     print (rate)                        #printing current voice rate
-    engine.setProperty('rate', 150)  
+    engine.setProperty('rate', 200)  
     voices = engine.getProperty('voices')
     print(voices)
     engine.setProperty('voice', voices[0].id)
