@@ -1,21 +1,17 @@
-import pyttsx3
-from pathlib import Path
+from gtts import gTTS
+from pydub import AudioSegment
 
 async def convert_text_to_speech(text, file_name):
-    file_path = Path(file_name).resolve()
-    print("FILENAME DE CONVERTTEXT:", file_path)
-    """ RATE"""
-       # setting up new voice rate
+    # Convertir texto a audio usando gTTS
+    tts = gTTS(text, lang='es',slow=False)
+    
+    # Guardar como archivo MP3 temporal
+    tts.save("audio_temp.mp3")
+    
+    # Convertir de MP3 a WAV usando pydub
+    audio = AudioSegment.from_mp3("audio_temp.mp3")
+    audio.export(file_name + ".wav", format="wav")   
 
-    engine = pyttsx3.init()
-    rate = engine.getProperty('rate')   # getting details of current speaking rate
-    print (rate)                        #printing current voice rate
-    engine.setProperty('rate', 200)  
-    voices = engine.getProperty('voices')
-    print(voices)
-    engine.setProperty('voice', voices[0].id)
-    # Guardar el archivo (formato .mp3 no soportado, solo .wav)
-    engine.save_to_file(text, str(file_path.with_suffix(".wav")))
-    engine.runAndWait()
 
-    print(f"Texto convertido a voz y guardado en: {file_path.with_suffix('.wav')}")
+
+

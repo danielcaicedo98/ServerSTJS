@@ -115,17 +115,19 @@ async def talking_chat(request):
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
             chat = model.start_chat(history=historial)
-            response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas y que el texto pueda ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
+            response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas,ten muy en cuenta que el texto va a ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
             respuesta_limpia = limpiar_texto(response.text)
 
             unique_id = str(uuid.uuid4())
             file_name = f"mensaje-{unique_id}"
-            audio_file_name = f"./audios/{file_name}.mp3"  
+            audio_file_name = f"./audios/{file_name}"  
             
-            await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
-            await get_phonemes(file_name)
-            audio = await audio_file_to_base64(f"audios/{file_name}.wav")
-            lypsinc = await read_json_transcript(f"audios/{file_name}.json")
+            # await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
+            # await get_phonemes(file_name)
+            audio = await audio_file_to_base64(f"audios/default_audio.wav")
+            # lypsinc = await read_json_transcript(f"audios/{file_name}.json")
+            lypsinc = await read_json_transcript('audios/default_visemas.json')
+            
             
             messages = [
                 {
@@ -145,38 +147,36 @@ async def talking_chat(request):
                 return JsonResponse({"error": str(error)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
-
-
-# @csrf_exempt
-# async def talking_chat(request):
+@csrf_exempt
+async def talking_chat_complete(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             mensaje = data.get("message", "")
-
+            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional    
             if not mensaje:
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
-            
-             
-            
-            response = model.generate_content(mensaje)
+
+            chat = model.start_chat(history=historial)
+            # response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas,ten muy en cuenta que el texto va a ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
+            response = chat.send_message(mensaje)
             respuesta_limpia = limpiar_texto(response.text)
-            
+
             unique_id = str(uuid.uuid4())
             file_name = f"mensaje-{unique_id}"
-            audio_file_name = f"./audios/{file_name}.mp3"  
+            audio_file_name = f"./audios/{file_name}"  
             
             await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
             await get_phonemes(file_name)
             audio = await audio_file_to_base64(f"audios/{file_name}.wav")
-            lypsinc = await read_json_transcript(f"audios/{file_name}.json")
+            lypsinc = await read_json_transcript(f"audios/{file_name}.json")            
             
             messages = [
                 {
-                    "text": "Hey there... How was your day?",
+                    "text": respuesta_limpia,
                     "audio": audio,
                     "lipsync": lypsinc,
-                    "facialExpression": "smile",
+                    "facialExpression": "default",
                     "animation": "TalkingOne",
                 }
             ]

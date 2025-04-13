@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from evaluador.views import evaluar_codigo, free_chat, free_conversation, talking_chat
+from evaluador.views import evaluar_codigo, free_chat, free_conversation, talking_chat, talking_chat_complete
 from serverstjs.firestore import *
 
 
@@ -26,6 +26,7 @@ urlpatterns = [
     path('free_chat/', free_chat, name='free_chat'),
     path('free_conversation/', free_conversation, name='free_conversation'),
     path('talking_chat/', talking_chat, name='talking_chat'),
+    path('talking_chat_complete/', talking_chat_complete, name='talking_chat_complete'),
     path('registro/', register_user, name='registro'),
     path('login_google/', login_with_google, name='login_google'),
     path('login_user/', login_user, name='login_user'),
