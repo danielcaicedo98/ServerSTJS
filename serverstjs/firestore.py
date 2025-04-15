@@ -304,7 +304,6 @@ def get_progress(request):
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
-
 @csrf_exempt
 def login_user(request):
     if request.method == 'POST':
@@ -345,40 +344,3 @@ def login_user(request):
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
-
-
-# @csrf_exempt
-# def login_user(request):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-#             email = data.get("email")
-#             password = data.get("password")
-
-#             if not email or not password:
-#                 return JsonResponse({"error": "Email y contraseña son requeridos"}, status=400)
-
-#             # Autenticar usuario con Firebase
-#             try:
-#                 user = auth.get_user_by_email(email)
-#             except firebase_admin.auth.UserNotFoundError:
-#                 return JsonResponse({"error": "Usuario no encontrado"}, status=404)
-
-#             # Simular autenticación (Firebase Admin SDK no tiene sign-in directo)
-#             user_ref = db.collection("users").document(user.uid)
-#             user_doc = user_ref.get()
-
-#             if not user_doc.exists:
-#                 return JsonResponse({"error": "Usuario no registrado en la base de datos"}, status=404)
-
-#             return JsonResponse({
-#                 "message": "Inicio de sesión exitoso",
-#                 "uid": user.uid,
-#                 "email": user.email,
-#                 "name": user.display_name                
-#                 })
-        
-#         except Exception as e:
-#             return JsonResponse({"error": str(e)}, status=500)
-    
-#     return JsonResponse({"error": "Método no permitido"}, status=405)
