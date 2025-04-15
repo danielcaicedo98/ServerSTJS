@@ -9,8 +9,7 @@ import json
 import jwt
 from jwt.exceptions import InvalidTokenError
 from firebase_admin import auth as firebase_auth
-
-SECRET_KEY = "SMART_TUTOR_JAVASCRIPT_2025"
+import hashlib
 
 # Inicializar Firebase si no está inicializado
 def initialize_firebase():
@@ -160,13 +159,14 @@ def register_user(request):
             email = data.get("email")
             token_password = data.get("password")
             name = data.get("name", "")
-
+           
             if not email or not token_password:
                 return JsonResponse({"error": "Email y contraseña son requeridos"}, status=400)
             
             try:
-                decoded = jwt.decode(token_password, SECRET_KEY, algorithms=["HS256"])
-                password = decoded.get("password")
+                # password =  hashlib.sha256(token_password.encode()).hexdigest()       
+                password =  token_password    
+                print(password)       
             except InvalidTokenError:
                 return JsonResponse({"error": "Token de contraseña inválido"}, status=400)
 
