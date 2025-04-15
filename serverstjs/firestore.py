@@ -1,8 +1,16 @@
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
+from .utils import generate_verification_code, send_verification_email
+from django.utils import timezone
+from datetime import timedelta
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+import jwt
+from jwt.exceptions import InvalidTokenError
+from firebase_admin import auth as firebase_auth
+
+SECRET_KEY = "SMART_TUTOR_JAVASCRIPT_2025"
 
 # Inicializar Firebase si no está inicializado
 def initialize_firebase():
@@ -140,37 +148,86 @@ def create_progress_document(user_id):
     if not progress_ref.get().exists:
         progress_ref.set(DEFAULT_PROGRESS)
 
+from .utils import generate_verification_code, send_verification_email
+from django.utils import timezone
+from datetime import timedelta
+
 @csrf_exempt
 def register_user(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             email = data.get("email")
-            password = data.get("password")
+            token_password = data.get("password")
             name = data.get("name", "")
 
-            if not email or not password:
+            if not email or not token_password:
                 return JsonResponse({"error": "Email y contraseña son requeridos"}, status=400)
+            
+            try:
+                decoded = jwt.decode(token_password, SECRET_KEY, algorithms=["HS256"])
+                password = decoded.get("password")
+            except InvalidTokenError:
+                return JsonResponse({"error": "Token de contraseña inválido"}, status=400)
 
-            user = auth.create_user(
-                email=email,
-                password=password,
-                display_name=name
-            )
+            user = auth.create_user(email=email, password=password, display_name=name)
 
+            # Generar y enviar código
+            code = generate_verification_code()
+            send_verification_email(email, code)
+
+            # Guardar usuario y código en Firestore (marcar como no verificado)
             user_ref = db.collection("users").document(user.uid)
             user_ref.set({
                 "email": email,
-                "name": name
+                "name": name,
+                "verified": False,
+                "verification_code": code,
+                "code_expires_at": (timezone.now() + timedelta(minutes=10)).isoformat()
             })
 
-            # Crear documento de progreso
             create_progress_document(user.uid)
 
-            return JsonResponse({"message": "Usuario registrado exitosamente", "uid": user.uid, "name": name, "email": email})
+            return JsonResponse({"message": "Usuario registrado. Verifica tu email", "uid": user.uid})
+
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
+
     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+@csrf_exempt
+def verify_code(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            uid = data.get("uid")
+            code = data.get("code")
+
+            user_ref = db.collection("users").document(uid)
+            user_data = user_ref.get().to_dict()
+
+            if not user_data:
+                return JsonResponse({"error": "Usuario no encontrado"}, status=404)
+
+            if user_data.get("verified"):
+                return JsonResponse({"message": "Ya verificado"}, status=200)
+
+            if user_data["verification_code"] != code:
+                return JsonResponse({"error": "Código incorrecto"}, status=400)
+
+            # Validar expiración
+            expires_at = timezone.datetime.fromisoformat(user_data["code_expires_at"])
+            if timezone.now() > expires_at:
+                return JsonResponse({"error": "El código ha expirado"}, status=400)
+
+            user_ref.update({"verified": True, "verification_code": None})
+            return JsonResponse({"message": "Verificación exitosa"})
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
 
 @csrf_exempt
 def login_with_google(request):
@@ -247,33 +304,81 @@ def get_progress(request):
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
+
 @csrf_exempt
 def login_user(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            email = data.get("email")
-            password = data.get("password")
+            id_token = data.get("id_token")
+            # print(id_token)
 
-            if not email or not password:
-                return JsonResponse({"error": "Email y contraseña son requeridos"}, status=400)
+            if not id_token:
+                return JsonResponse({"error": "El id_token es requerido"}, status=400)
 
-            # Autenticar usuario con Firebase
-            try:
-                user = auth.get_user_by_email(email)
-            except firebase_admin.auth.UserNotFoundError:
-                return JsonResponse({"error": "Usuario no encontrado"}, status=404)
+            # Verifica el token de Firebase
+            decoded_token = firebase_auth.verify_id_token(id_token)
+            uid = decoded_token["uid"]
+            
+            
+            user = firebase_auth.get_user(uid)
 
-            # Simular autenticación (Firebase Admin SDK no tiene sign-in directo)
-            user_ref = db.collection("users").document(user.uid)
-            user_doc = user_ref.get()
+            user_ref = db.collection("users").document(uid)
+            user_doc = user_ref.get()            
+            
+            user_data = user_doc.to_dict()
+            verified = user_data.get("verified", False)
+            print(verified)
 
             if not user_doc.exists:
                 return JsonResponse({"error": "Usuario no registrado en la base de datos"}, status=404)
+            print(user)
+            return JsonResponse({
+                "uid": uid,
+                "email": user.email,
+                "name": user.display_name,
+                "verified": verified
+            })
 
-            return JsonResponse({"message": "Inicio de sesión exitoso", "uid": user.uid, "email": user.email, "name": user.display_name})
-        
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
-    
+
     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+
+# @csrf_exempt
+# def login_user(request):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             email = data.get("email")
+#             password = data.get("password")
+
+#             if not email or not password:
+#                 return JsonResponse({"error": "Email y contraseña son requeridos"}, status=400)
+
+#             # Autenticar usuario con Firebase
+#             try:
+#                 user = auth.get_user_by_email(email)
+#             except firebase_admin.auth.UserNotFoundError:
+#                 return JsonResponse({"error": "Usuario no encontrado"}, status=404)
+
+#             # Simular autenticación (Firebase Admin SDK no tiene sign-in directo)
+#             user_ref = db.collection("users").document(user.uid)
+#             user_doc = user_ref.get()
+
+#             if not user_doc.exists:
+#                 return JsonResponse({"error": "Usuario no registrado en la base de datos"}, status=404)
+
+#             return JsonResponse({
+#                 "message": "Inicio de sesión exitoso",
+#                 "uid": user.uid,
+#                 "email": user.email,
+#                 "name": user.display_name                
+#                 })
+        
+#         except Exception as e:
+#             return JsonResponse({"error": str(e)}, status=500)
+    
+#     return JsonResponse({"error": "Método no permitido"}, status=405)
