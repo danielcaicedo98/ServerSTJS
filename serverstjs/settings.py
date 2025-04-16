@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 
+from decouple import config
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,7 +26,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")  #
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-w5k=j1u6!dt#n7ctb$l0(2q5-(k7@89a=ep#!a*lt@)=co6)k*'
+SECRET_KEY = config('PROD_KEY')  
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -135,5 +138,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'holamellamodaniel1998@gmail.com'
-EMAIL_HOST_PASSWORD = 'armn jozr kpjq weez'
+EMAIL_HOST_USER = config('EMAIL_HOST_USER_SECRET')  
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD_SECRET')

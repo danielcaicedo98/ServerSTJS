@@ -3,8 +3,9 @@ import jwt
 from django.http import JsonResponse
 from django.utils.deprecation import MiddlewareMixin
 from functools import wraps
+from decouple import config
 
-SECRET_KEY = "smart_tutor_javascript_2025"  # Usa la misma clave con la que generas el token
+SECRET_KEY = config('SECRET_KEY')  
 
 def require_token(view_func):
     def _wrapped_view(request, *args, **kwargs):

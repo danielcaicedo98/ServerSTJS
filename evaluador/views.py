@@ -9,9 +9,10 @@ from .text_to_speech import convert_text_to_speech
 from .rhubarb_lyp_sinc import get_phonemes
 from .files import audio_file_to_base64, read_json_transcript
 from .auth import require_token, require_token_async
+from decouple import config
 
-
-genai.configure(api_key='AIzaSyBHjc9tKEPxVUIlqmH2LJsK-MjJRFcQIzI')
+api_gemini = config('GEMINI_KEY')  
+genai.configure(api_key=api_gemini)
 
 # Definir el modelo a utilizar
 version = 'models/gemini-1.5-flash'

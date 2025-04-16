@@ -12,14 +12,13 @@ from firebase_admin import auth as firebase_auth
 from decouple import config
 from evaluador.auth import require_token
 
-
 SECRET_KEY = config('SECRET_KEY')
 
 def generate_jwt(uid, email):
     payload = {
         "uid": uid,
         "email": email,
-        "exp": (timezone.now() + timedelta(seconds=60)).timestamp()
+        "exp": (timezone.now() + timedelta(hours=1)).timestamp()
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return token
