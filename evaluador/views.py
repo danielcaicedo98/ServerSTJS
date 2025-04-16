@@ -8,7 +8,9 @@ import asyncio
 from .text_to_speech import convert_text_to_speech
 from .rhubarb_lyp_sinc import get_phonemes
 from .files import audio_file_to_base64, read_json_transcript
-# Configurar la API de Google Generative AI
+from .auth import require_token, require_token_async
+
+
 genai.configure(api_key='AIzaSyBHjc9tKEPxVUIlqmH2LJsK-MjJRFcQIzI')
 
 # Definir el modelo a utilizar
@@ -21,6 +23,7 @@ def limpiar_texto(texto):
                 return texto_limpio
 
 @csrf_exempt
+@require_token
 def evaluar_codigo(request):
     if request.method == 'POST':
         try:
@@ -64,6 +67,7 @@ def evaluar_codigo(request):
 
 
 @csrf_exempt
+@require_token
 def free_chat(request):
     if request.method == 'POST':
         try:
@@ -83,6 +87,7 @@ def free_chat(request):
 
 
 @csrf_exempt
+@require_token
 def free_conversation(request):
     if request.method == 'POST':
         try:
@@ -105,6 +110,7 @@ def free_conversation(request):
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 @csrf_exempt
+@require_token_async
 async def talking_chat(request):
     if request.method == 'POST':
         try:
@@ -148,6 +154,7 @@ async def talking_chat(request):
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 @csrf_exempt
+@require_token_async
 async def talking_chat_complete(request):
     if request.method == 'POST':
         try:

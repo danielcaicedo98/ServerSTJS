@@ -9,7 +9,20 @@ import json
 import jwt
 from jwt.exceptions import InvalidTokenError
 from firebase_admin import auth as firebase_auth
-import hashlib
+from decouple import config
+from evaluador.auth import require_token
+
+
+SECRET_KEY = config('SECRET_KEY')
+
+def generate_jwt(uid, email):
+    payload = {
+        "uid": uid,
+        "email": email,
+        "exp": (timezone.now() + timedelta(seconds=60)).timestamp()
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    return token
 
 # Inicializar Firebase si no está inicializado
 def initialize_firebase():
@@ -221,7 +234,11 @@ def verify_code(request):
                 return JsonResponse({"error": "El código ha expirado"}, status=400)
 
             user_ref.update({"verified": True, "verification_code": None})
-            return JsonResponse({"message": "Verificación exitosa"})
+            token = generate_jwt(uid, user_data["email"])            
+            return JsonResponse({
+                "message": "Verificación exitosa",
+                "token": token
+                })
 
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
@@ -246,22 +263,29 @@ def login_with_google(request):
 
             user_ref = db.collection("users").document(uid)
             user_doc = user_ref.get()
-            
+            token = generate_jwt(uid, email)
             if not user_doc.exists:
                 user_ref.set({
                     "email": email,
-                    "name": name
+                    "name": name,
+                    "token": token
                 })
 
             # Crear documento de progreso si no existe
             create_progress_document(uid)
 
-            return JsonResponse({"message": "Inicio de sesión exitoso", "uid": uid, "email": email, "name": name})
+            return JsonResponse({
+                "message": "Inicio de sesión exitoso",
+                "uid": uid, 
+                "email": email, 
+                "name": name
+                })
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 @csrf_exempt
+@require_token
 def update_progress(request):
     """Actualiza una parte del progreso de un usuario"""
     if request.method == 'POST':
@@ -284,6 +308,7 @@ def update_progress(request):
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 @csrf_exempt
+@require_token
 def get_progress(request):
     """Obtiene el progreso de un usuario"""
     if request.method == 'GET':
@@ -317,13 +342,11 @@ def login_user(request):
 
             # Verifica el token de Firebase
             decoded_token = firebase_auth.verify_id_token(id_token)
-            uid = decoded_token["uid"]
-            
+            uid = decoded_token["uid"]            
             
             user = firebase_auth.get_user(uid)
-
             user_ref = db.collection("users").document(uid)
-            user_doc = user_ref.get()            
+            user_doc = user_ref.get()        
             
             user_data = user_doc.to_dict()
             verified = user_data.get("verified", False)
@@ -331,12 +354,15 @@ def login_user(request):
 
             if not user_doc.exists:
                 return JsonResponse({"error": "Usuario no registrado en la base de datos"}, status=404)
-            print(user)
+            
+            token = generate_jwt(uid, user.email)
+            
             return JsonResponse({
                 "uid": uid,
                 "email": user.email,
                 "name": user.display_name,
-                "verified": verified
+                "verified": verified,
+                "token": token
             })
 
         except Exception as e:
