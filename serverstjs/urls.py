@@ -32,4 +32,5 @@ urlpatterns = [
     path('login_user/', login_user, name='login_user'),
     path('get_progress/', get_progress, name='get_progress'),
     path('update_progress/', update_progress, name='update_progress'),
+    path('verify_code/', verify_code, name='verify_code'),
 ]
