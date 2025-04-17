@@ -139,8 +139,8 @@ async def talking_chat(request):
             messages = [
                 {
                     "text": respuesta_limpia,
-                    "audio": audio,
-                    "lipsync": lypsinc,
+                    # "audio": audio,
+                    # "lipsync": lypsinc,
                     "facialExpression": "default",
                     "animation": "TalkingOne",
                 }
