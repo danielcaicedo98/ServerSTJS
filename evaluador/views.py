@@ -43,7 +43,7 @@ def evaluar_codigo(request):
             prompt = f"""Eres un asistente de programación experto en JavaScript.
                 Tu tarea es evaluar el código de un estudiante, identificar errores y proporcionar retroalimentación detallada.  
                 Debes seguir estas reglas:  
-                1. **Analizar el código** proporcionado y determinar si cumple con los requisitos del ejercicio.  
+                1. **Analizar el código** proporcionado y determinar si cumple con los requisitos del ejercicio. En caso de cumplir con los requisitos retornar la frase "Buen trabajo, ejercicio completado"  
                 2. **Identificar errores sintácticos, semánticos o lógicos**, explicando por qué ocurren y cómo corregirlos.  
                 3. **La corrección debe ser unas cuantas líneas**  
                 4. **Explicarle al estudiante claramente en unas pocas líneas cuál es el error**  
@@ -162,7 +162,8 @@ async def transcribir_audio(request):
                 return JsonResponse({"error": "No se proporcionó un archivo de audio."}, status=400)
 
             audio_file = request.FILES['audio']
-            audio_path = f"/tmp/{uuid.uuid4()}.mp3"    
+            file_path = uuid.uuid4()
+            audio_path = f"/tmp/{file_path}.mp3"    
                              
             with open(audio_path, 'wb') as f:
                 for chunk in audio_file.chunks():
@@ -184,12 +185,26 @@ async def transcribir_audio(request):
             chat = model.start_chat(history=historial)
             prompt = "En un texto muy corto, en un tono amable, de unas pocas líneas, ten muy en cuenta que el texto va a ser leído por un sintetizador. Respóndeme lo siguiente: " + transcribed_text
             response = chat.send_message(prompt)
-            respuesta_limpia = limpiar_texto(response.text)            
+            respuesta_limpia = limpiar_texto(response.text) 
+            audio_file_name = f"./audios/{file_path}"  
+            
+            await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
+            await get_phonemes(file_path)
+            audio = await audio_file_to_base64(f"audios/{file_path}.wav")
+            lypsinc = await read_json_transcript(f"audios/{file_path}.json")            
 
             messages = [
+                # {
+                #     "transcription": transcribed_text,
+                #     "text": respuesta_limpia,
+                #     "facialExpression": "default",
+                #     "animation": "TalkingOne",
+                # }
                 {
                     "transcription": transcribed_text,
                     "text": respuesta_limpia,
+                    "audio": audio,
+                    "lipsync": lypsinc,
                     "facialExpression": "default",
                     "animation": "TalkingOne",
                 }
