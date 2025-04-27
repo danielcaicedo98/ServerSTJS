@@ -12,6 +12,7 @@ from firebase_admin import auth as firebase_auth
 from decouple import config
 from evaluador.auth import require_token
 
+
 SECRET_KEY = config('SECRET_KEY')
 
 def generate_jwt(uid, email):
@@ -159,10 +160,6 @@ def create_progress_document(user_id):
     if not progress_ref.get().exists:
         progress_ref.set(DEFAULT_PROGRESS)
 
-from .utils import generate_verification_code, send_verification_email
-from django.utils import timezone
-from datetime import timedelta
-
 @csrf_exempt
 def register_user(request):
     if request.method == 'POST':
@@ -277,7 +274,8 @@ def login_with_google(request):
                 "message": "Inicio de sesión exitoso",
                 "uid": uid, 
                 "email": email, 
-                "name": name
+                "name": name,
+                "token": token
                 })
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)

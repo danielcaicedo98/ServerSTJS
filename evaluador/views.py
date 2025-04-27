@@ -50,7 +50,7 @@ def evaluar_codigo(request):
                 5. **La salida debe ser solamente una lista donde un elemento de la lista corresponda a un error, si hay 2 errores, entonces dos elementos, si hay tres errores entonces tres elementos de la lista**  
                 6. **usa un tono amigable para el estudiante**  
                 7. **Cada elemento de la lista debe iniciar con ** y terminar en un salto de línea**                 
-                8. **Evita explicaciones adicionales**                
+                8. **Evita explicaciones adicionales y evita saludar**                
                 ---  
                 ### **Ejercicio a Evaluar**  
                 **Descripción:**  
@@ -62,9 +62,23 @@ def evaluar_codigo(request):
                 ```"""
             response = model.generate_content(prompt)
             formated_text = limpiar_texto(response.text)
-            
+            palabras = formated_text.split()
+            sumary_text = formated_text
+            if len(palabras) > 50:
+                response_model = model.generate_content(f'''Puedes por favor resumir esta información en un texto corto
+                                                     , ten en cuenta que el texto sea para que lo lea un sintetizador, 
+                                                     por favor que el texto este escrito en segunda persona con tono amable, 
+                                                     por favor que sea solo texto plano, unicamente palabras para que puedan ser reproducidas por un 
+                                                     sintetizador este es el texto a resumir: {formated_text}''')
+                sumary_text = response_model.text
             # print(response.text)
-            return JsonResponse({"respuesta": formated_text})
+            
+            response = {
+                "texto": formated_text,
+                "resumen": sumary_text
+                }
+            
+            return JsonResponse({"respuesta": response})
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
@@ -193,13 +207,7 @@ async def transcribir_audio(request):
             audio = await audio_file_to_base64(f"audios/{file_path}.wav")
             lypsinc = await read_json_transcript(f"audios/{file_path}.json")            
 
-            messages = [
-                # {
-                #     "transcription": transcribed_text,
-                #     "text": respuesta_limpia,
-                #     "facialExpression": "default",
-                #     "animation": "TalkingOne",
-                # }
+            messages = [                
                 {
                     "transcription": transcribed_text,
                     "text": respuesta_limpia,
