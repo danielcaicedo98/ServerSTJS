@@ -220,21 +220,33 @@ def verify_code(request):
 
             if user_data.get("verified"):
                 return JsonResponse({"message": "Ya verificado"}, status=200)
-
-            if user_data["verification_code"] != code:
-                return JsonResponse({"error": "Código incorrecto"}, status=400)
-
+            
             # Validar expiración
             expires_at = timezone.datetime.fromisoformat(user_data["code_expires_at"])
             if timezone.now() > expires_at:
-                return JsonResponse({"error": "El código ha expirado"}, status=400)
+                # Código expiró: Generar y enviar uno nuevo
+                new_code = generate_verification_code()
+                send_verification_email(user_data["email"], new_code)
+
+                # Actualizar en Firestore
+                user_ref.update({
+                    "verification_code": new_code,
+                    "code_expires_at": (timezone.now() + timedelta(minutes=10)).isoformat()
+                })
+
+                return JsonResponse({
+                    "error": "El código ha expirado. Se ha enviado un nuevo código."
+                }, status=400)
+
+            if user_data["verification_code"] != code:
+                return JsonResponse({"error": "Código incorrecto"}, status=400)            
 
             user_ref.update({"verified": True, "verification_code": None})
             token = generate_jwt(uid, user_data["email"])            
             return JsonResponse({
                 "message": "Verificación exitosa",
                 "token": token
-                })
+            })
 
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
