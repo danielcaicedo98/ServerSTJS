@@ -138,22 +138,23 @@ async def talking_chat(request):
 
             chat = model.start_chat(history=historial)
             response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas,ten muy en cuenta que el texto va a ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
-            respuesta_limpia = limpiar_texto(response.text)
-
-            unique_id = str(uuid.uuid4())
-            file_name = f"mensaje-{unique_id}"
+            respuesta_limpia = limpiar_texto(response.text)   
             
-            # await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
-            audio = await audio_file_to_base64(f"audios/default_audio.wav")
-            # lypsinc = await read_json_transcript(f"audios/{file_name}.json")
-            lypsinc = await read_json_transcript('audios/default_visemas.json')
+            # text_start = '''Hola cómo estás, me llamo Lucy y seré tu tutora, estoy aquí para apoyarte en tu aprendizaje
+            #     por favor cuentame un poco sobre ti. Dime qué lenguaje de programación ya conoces?'''
             
+            # unique_id = str(uuid.uuid4())
+            # file_name = f"mensaje-{unique_id}"
+            # audio_file_name = f"./audios/{file_name}"    
+            
+            # await convert_text_to_speech(text=text_start, file_name=audio_file_name)
+            # await get_phonemes(file_name)
+            # audio = await audio_file_to_base64(f"audios/{file_name}.wav")
+            # lypsinc = await read_json_transcript(f"audios/{file_name}.json")            
             
             messages = [
                 {
-                    "text": respuesta_limpia,
-                    # "audio": audio,
-                    # "lipsync": lypsinc,
+                    "text": respuesta_limpia,                    
                     "facialExpression": "default",
                     "animation": "TalkingOne",
                 }

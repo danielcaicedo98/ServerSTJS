@@ -32,5 +32,7 @@ urlpatterns = [
     path('get_progress/', get_progress, name='get_progress'),
     path('update_progress/', update_progress, name='update_progress'),
     path('verify_code/', verify_code, name='verify_code'),
-    path('transcribir_audio/', transcribir_audio, name='transcribir_audio'),    
+    path('transcribir_audio/', transcribir_audio, name='transcribir_audio'),  
+    path('actualizar_usuario/', update_user, name='actualizar_usuario'), 
+    path('verificar_lenguaje/', check_language, name='verificar_lenguaje'),     
 ]
