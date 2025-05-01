@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+sumy_test.py
+
+evaluador/__pycache__
+serverstjs/__pycache__
+
 # Distribución
 .Python
 env/
