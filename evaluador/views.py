@@ -119,23 +119,19 @@ def evaluar_codigo(request):
 
                 ```"""
             response = model.generate_content(prompt)
-            # formated_text = limpiar_texto(response.text)
-            # palabras = formated_text.split()
-            # sumary_text = formated_text
-            # if len(palabras) > 50:
-            #     response_model = model.generate_content(f'''Puedes por favor resumir esta información en un texto corto
-            #                                          , ten en cuenta que el texto sea para que lo lea un sintetizador, 
-            #                                          por favor que el texto este escrito en segunda persona con tono amable, 
-            #                                          por favor que sea solo texto plano, unicamente palabras para que puedan ser reproducidas por un 
-            #                                          sintetizador este es el texto a resumir: {formated_text}''')
-            #     sumary_text = response_model.text
-            print(response.text)
-            # cleaned = response.text.strip().removeprefix("```json").removesuffix("```").strip()
-            # data = json.loads(cleaned)
-            # print(data)
-            # resultado = json.loads(response.text)
+            palabras = response.text.split()
+            sumary_text = response.text
+            if len(palabras) > 50:
+                response_model = model.generate_content(f'''Puedes por favor resumir esta información en un texto corto
+                                                     , ten en cuenta que el texto sea para que lo lea un sintetizador, 
+                                                     por favor que el texto este escrito en segunda persona con tono amable, 
+                                                     por favor que sea solo texto plano, unicamente palabras para que puedan ser reproducidas por un 
+                                                     sintetizador este es el texto a resumir: {response.text}''')
+                sumary_text = response_model.text
+            
             response = {
                 "texto": response.text,
+                "resumen": sumary_text
             }
             
             return JsonResponse(response)
@@ -158,9 +154,9 @@ def free_chat(request):
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
             response = model.generate_content(mensaje)
-            respuesta_limpia = limpiar_texto(response.text)
+            # respuesta_limpia = limpiar_texto(response.text)
 
-            return JsonResponse({"respuesta": respuesta_limpia})
+            return JsonResponse({"response": response.text})
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
