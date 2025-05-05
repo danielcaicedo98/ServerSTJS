@@ -20,6 +20,7 @@ async def get_phonemes(message):
 
         # Convertir MP3 a WAV
         # await exec_command(f"ffmpeg -y -i ../audios/{message}.mp3 ../audios/{message}.wav")
+        
 
         # Ejecutar Rhubarb para generar el archivo .json
         ruta_rhubarb = Path("./rhubarb_linux/rhubarb").resolve()

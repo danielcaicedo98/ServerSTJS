@@ -10,6 +10,9 @@ from .rhubarb_lyp_sinc import get_phonemes
 from .files import audio_file_to_base64, read_json_transcript
 from .auth import require_token, require_token_async
 from decouple import config
+import whisper
+
+whisper_model = whisper.load_model("base")
 
 api_gemini = config('GEMINI_KEY')  
 genai.configure(api_key=api_gemini)
@@ -22,6 +25,7 @@ def limpiar_texto(texto):
                 # Eliminar comillas dobles, comillas simples y backticks
                 texto_limpio = re.sub(r"[\"'`]", "", texto)
                 return texto_limpio
+
 
 @csrf_exempt
 @require_token
@@ -38,33 +42,48 @@ def evaluar_codigo(request):
                 return JsonResponse({"error": "No se proporcionó código para evaluar."}, status=400)
             
             prompt = f"""Eres un asistente de programación experto en JavaScript.
-                Tu tarea es evaluar el código de un estudiante, identificar errores y proporcionar retroalimentación detallada.  
-                Debes seguir estas reglas:  
-                1. **Analizar el código** proporcionado y determinar si cumple con los requisitos del ejercicio.  
-                2. **Identificar errores sintácticos, semánticos o lógicos**, explicando por qué ocurren y cómo corregirlos.  
-                3. **La corrección debe ser unas cuantas líneas**  
-                4. **Explicarle al estudiante claramente en unas pocas líneas cuál es el error**  
-                5. **La salida debe ser solamente una lista donde un elemento de la lista corresponda a un error, si hay 2 errores, entonces dos elementos, si hay tres errores entonces tres elementos de la lista**  
-                6. **usa un tono amigable para el estudiante**  
-                7. **Cada elemento de la lista debe iniciar con ** y terminar en un salto de línea**                 
-                8. **Evita explicaciones adicionales**                
-                ---  
-                ### **Ejercicio a Evaluar**  
-                **Descripción:**  
-                {descripcion_ejercicio}  
-                ---  
-                ### **Código del Estudiante**  
-                ```javascript  
-                {codigo_estudiante}  
-                ```"""
+                        Tu tarea es evaluar el código de un estudiante, identificar errores y proporcionar retroalimentación detallada.
+                        Debes seguir estas reglas:
+                        1. Analizar el código proporcionado y determinar si cumple con los requisitos del ejercicio. En caso de cumplir con los requisitos retornar la frase "Buen trabajo ejercicio completado"
+                        2. Identificar errores sintácticos, semánticos o lógicos, explicando por qué ocurren y cómo corregirlos.
+                        3. La corrección debe ser unas cuantas líneas
+                        4. Explicarle al estudiante claramente en unas pocas líneas cuál es el error y evita mencionar la linea en la que se encuentra el error
+                        5. La salida debe ser solamente una lista donde un elemento de la lista corresponda a un error, si hay 2 errores, entonces dos elementos, si hay tres errores entonces tres elementos de la lista
+                        6. Usa un tono amigable para el estudiante                        
+                        7. Evita explicaciones adicionales, evita saludar                  
+
+                        ---
+                        ### Ejercicio a Evaluar
+                        Descripción:
+                        {descripcion_ejercicio}
+                        ---
+                        ### Código del Estudiante en JavaScript:                        
+                        {codigo_estudiante}
+
+                ```"""                
+            print(prompt)
             response = model.generate_content(prompt)
-            formated_text = limpiar_texto(response.text)
+            palabras = response.text.split()
+            sumary_text = response.text
+            if len(palabras) > 50:
+                response_model = model.generate_content(f'''Puedes por favor resumir esta información en un texto corto
+                                                     , ten en cuenta que el texto sea para que lo lea un sintetizador, 
+                                                     por favor que el texto este escrito en segunda persona con tono amable, 
+                                                     por favor que sea solo texto plano, unicamente palabras para que puedan ser reproducidas por un 
+                                                     sintetizador este es el texto a resumir: {response.text}''')
+                sumary_text = response_model.text
             
-            # print(response.text)
-            return JsonResponse({"respuesta": formated_text})
+            response = {
+                "texto": response.text,
+                "resumen": sumary_text
+            }
+            
+            return JsonResponse(response)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
 
 
 @csrf_exempt
@@ -79,13 +98,12 @@ def free_chat(request):
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
             response = model.generate_content(mensaje)
-            respuesta_limpia = limpiar_texto(response.text)
+            # respuesta_limpia = limpiar_texto(response.text)
 
-            return JsonResponse({"respuesta": respuesta_limpia})
+            return JsonResponse({"response": response.text})
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
-
 
 @csrf_exempt
 @require_token
@@ -123,24 +141,23 @@ async def talking_chat(request):
 
             chat = model.start_chat(history=historial)
             response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas,ten muy en cuenta que el texto va a ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
-            respuesta_limpia = limpiar_texto(response.text)
-
-            unique_id = str(uuid.uuid4())
-            file_name = f"mensaje-{unique_id}"
-            audio_file_name = f"./audios/{file_name}"  
+            respuesta_limpia = limpiar_texto(response.text)   
             
-            # await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
+            # text_start = '''Hola cómo estás, me llamo Lucy y seré tu tutora, estoy aquí para apoyarte en tu aprendizaje
+            #     por favor cuentame un poco sobre ti. Dime qué lenguaje de programación ya conoces?'''
+            
+            # unique_id = str(uuid.uuid4())
+            # file_name = f"mensaje-{unique_id}"
+            # audio_file_name = f"./audios/{file_name}"    
+            
+            # await convert_text_to_speech(text=text_start, file_name=audio_file_name)
             # await get_phonemes(file_name)
-            audio = await audio_file_to_base64(f"audios/default_audio.wav")
-            # lypsinc = await read_json_transcript(f"audios/{file_name}.json")
-            lypsinc = await read_json_transcript('audios/default_visemas.json')
-            
+            # audio = await audio_file_to_base64(f"audios/{file_name}.wav")
+            # lypsinc = await read_json_transcript(f"audios/{file_name}.json")            
             
             messages = [
                 {
-                    "text": respuesta_limpia,
-                    # "audio": audio,
-                    # "lipsync": lypsinc,
+                    "text": respuesta_limpia,                    
                     "facialExpression": "default",
                     "animation": "TalkingOne",
                 }
@@ -153,6 +170,65 @@ async def talking_chat(request):
             else:            
                 return JsonResponse({"error": str(error)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+@csrf_exempt
+async def transcribir_audio(request):
+    if request.method == 'POST':
+        try:
+            # Verifica que se haya enviado el archivo de audio
+            if 'audio' not in request.FILES:
+                return JsonResponse({"error": "No se proporcionó un archivo de audio."}, status=400)
+
+            audio_file = request.FILES['audio']
+            file_path = uuid.uuid4()
+            audio_path = f"/tmp/{file_path}.mp3"    
+                             
+            with open(audio_path, 'wb') as f:
+                for chunk in audio_file.chunks():
+                    f.write(chunk)
+
+            # Transcribe el audio a texto en español
+            result = whisper_model.transcribe(audio_path, language='es')
+            transcribed_text = result['text']
+            print(transcribed_text)
+
+            if not transcribed_text.strip():
+                return JsonResponse({"error": "No se pudo transcribir el audio."}, status=400)
+
+            # Opcional: historial de conversación
+            historial_raw = request.POST.get("historial", "[]")
+            historial = json.loads(historial_raw)                   
+
+            # Genera una respuesta basada en el texto transcrito
+            chat = model.start_chat(history=historial)
+            prompt = "En un texto muy corto, en un tono amable, de unas pocas líneas, ten muy en cuenta que el texto va a ser leído por un sintetizador. Respóndeme lo siguiente: " + transcribed_text
+            response = chat.send_message(prompt)
+            respuesta_limpia = limpiar_texto(response.text) 
+            audio_file_name = f"./audios/{file_path}"  
+            
+            await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
+            await get_phonemes(file_path)
+            audio = await audio_file_to_base64(f"audios/{file_path}.wav")
+            lypsinc = await read_json_transcript(f"audios/{file_path}.json")            
+
+            messages = [                
+                {
+                    "transcription": transcribed_text,
+                    "text": respuesta_limpia,
+                    "audio": audio,
+                    "lipsync": lypsinc,
+                    "facialExpression": "default",
+                    "animation": "TalkingOne",
+                }
+            ]
+
+            return JsonResponse({"messages": messages})
+
+        except Exception as error:
+            return JsonResponse({"error": str(error)}, status=500)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
 
 @csrf_exempt
 @require_token_async

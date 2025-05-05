@@ -12,6 +12,7 @@ from firebase_admin import auth as firebase_auth
 from decouple import config
 from evaluador.auth import require_token
 
+
 SECRET_KEY = config('SECRET_KEY')
 
 def generate_jwt(uid, email):
@@ -153,15 +154,85 @@ DEFAULT_PROGRESS = {
     }
 }
 
+
+@csrf_exempt
+@require_token  
+def update_user(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            uid = data.get("uid")
+            updates = data.get("updates", {})
+
+            if not uid:
+                return JsonResponse({"error": "Se requiere el UID del usuario"}, status=400)
+
+            if not updates:
+                return JsonResponse({"error": "No se proporcionaron campos para actualizar"}, status=400)
+
+            user_ref = db.collection("users").document(uid)
+            user_doc = user_ref.get()
+
+            if not user_doc.exists:
+                return JsonResponse({"error": "Usuario no encontrado"}, status=404)
+
+            # Actualizar campos en Firestore
+            user_ref.update(updates)
+
+            return JsonResponse({"message": "Usuario actualizado correctamente"})
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
 def create_progress_document(user_id):
     """Crea el documento de progreso si no existe"""
     progress_ref = db.collection("users").document(user_id).collection("progreso").document("progreso")
     if not progress_ref.get().exists:
         progress_ref.set(DEFAULT_PROGRESS)
 
-from .utils import generate_verification_code, send_verification_email
-from django.utils import timezone
-from datetime import timedelta
+@csrf_exempt
+def login_with_google(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            id_token = data.get("id_token")
+
+            if not id_token:
+                return JsonResponse({"error": "Token de Google requerido"}, status=400)
+
+            decoded_token = auth.verify_id_token(id_token)
+            uid = decoded_token["uid"]
+            email = decoded_token.get("email")
+            name = decoded_token.get("name", "")
+
+            user_ref = db.collection("users").document(uid)
+            user_doc = user_ref.get()
+            token = generate_jwt(uid, email)
+            if not user_doc.exists:
+                user_ref.set({
+                    "email": email,
+                    "name": name,
+                    "token": token,
+                    "lenguaje_programacion": ""
+                })
+
+            # Crear documento de progreso si no existe
+            create_progress_document(uid)
+
+            return JsonResponse({
+                "message": "Inicio de sesión exitoso",
+                "uid": uid, 
+                "email": email, 
+                "name": name,
+                "token": token
+                })
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
 
 @csrf_exempt
 def register_user(request):
@@ -195,6 +266,7 @@ def register_user(request):
                 "name": name,
                 "verified": False,
                 "verification_code": code,
+                "lenguaje_programacion": "",
                 "code_expires_at": (timezone.now() + timedelta(minutes=10)).isoformat()
             })
 
@@ -223,64 +295,37 @@ def verify_code(request):
 
             if user_data.get("verified"):
                 return JsonResponse({"message": "Ya verificado"}, status=200)
-
-            if user_data["verification_code"] != code:
-                return JsonResponse({"error": "Código incorrecto"}, status=400)
-
+            
             # Validar expiración
             expires_at = timezone.datetime.fromisoformat(user_data["code_expires_at"])
             if timezone.now() > expires_at:
-                return JsonResponse({"error": "El código ha expirado"}, status=400)
+                # Código expiró: Generar y enviar uno nuevo
+                new_code = generate_verification_code()
+                send_verification_email(user_data["email"], new_code)
+
+                # Actualizar en Firestore
+                user_ref.update({
+                    "verification_code": new_code,
+                    "code_expires_at": (timezone.now() + timedelta(minutes=10)).isoformat()
+                })
+
+                return JsonResponse({
+                    "error": "El código ha expirado. Se ha enviado un nuevo código."
+                }, status=400)
+
+            if user_data["verification_code"] != code:
+                return JsonResponse({"error": "Código incorrecto"}, status=400)            
 
             user_ref.update({"verified": True, "verification_code": None})
             token = generate_jwt(uid, user_data["email"])            
             return JsonResponse({
                 "message": "Verificación exitosa",
                 "token": token
-                })
+            })
 
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
-    return JsonResponse({"error": "Método no permitido"}, status=405)
-
-
-@csrf_exempt
-def login_with_google(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            id_token = data.get("id_token")
-
-            if not id_token:
-                return JsonResponse({"error": "Token de Google requerido"}, status=400)
-
-            decoded_token = auth.verify_id_token(id_token)
-            uid = decoded_token["uid"]
-            email = decoded_token.get("email")
-            name = decoded_token.get("name", "")
-
-            user_ref = db.collection("users").document(uid)
-            user_doc = user_ref.get()
-            token = generate_jwt(uid, email)
-            if not user_doc.exists:
-                user_ref.set({
-                    "email": email,
-                    "name": name,
-                    "token": token
-                })
-
-            # Crear documento de progreso si no existe
-            create_progress_document(uid)
-
-            return JsonResponse({
-                "message": "Inicio de sesión exitoso",
-                "uid": uid, 
-                "email": email, 
-                "name": name
-                })
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 @csrf_exempt
@@ -308,6 +353,36 @@ def update_progress(request):
 
 @csrf_exempt
 @require_token
+def check_language(request):
+    """Verifica si el usuario ya seleccionó su lenguaje de programación"""
+    if request.method == 'GET':
+        try:
+            uid = request.GET.get("uid")
+
+            if not uid:
+                return JsonResponse({"error": "UID es requerido"}, status=400)
+
+            user_ref = db.collection("users").document(uid)
+            user_doc = user_ref.get()
+
+            if not user_doc.exists:
+                return JsonResponse({"error": "Usuario no encontrado"}, status=404)
+
+            user_data = user_doc.to_dict()
+            lenguaje_programacion = user_data.get("lenguaje_programacion", "").strip()
+
+            if lenguaje_programacion:
+                return JsonResponse({"has_language": True, "lenguaje_programacion": lenguaje_programacion})
+            else:
+                return JsonResponse({"has_language": False})
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+@csrf_exempt
+@require_token
 def get_progress(request):
     """Obtiene el progreso de un usuario"""
     if request.method == 'GET':
@@ -328,14 +403,52 @@ def get_progress(request):
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
+# @csrf_exempt
+# @require_token
+# def get_progress(request):
+#     """Obtiene el progreso de un usuario, verificando que haya definido su lenguaje de programación."""
+#     if request.method == 'GET':
+#         try:
+#             uid = request.GET.get("uid")
+
+#             if not uid:
+#                 return JsonResponse({"error": "UID es requerido"}, status=400)
+
+#             # Verificar primero si el usuario ha definido el lenguaje_programacion
+#             user_ref = db.collection("users").document(uid)
+#             user_doc = user_ref.get()
+
+#             if not user_doc.exists:
+#                 return JsonResponse({"error": "Usuario no encontrado"}, status=404)
+
+#             user_data = user_doc.to_dict()
+#             lenguaje_programacion = user_data.get("lenguaje_programacion", "").strip()
+
+#             if not lenguaje_programacion:
+#                 return JsonResponse({"error": "Debes seleccionar tu lenguaje de programación antes de ver el progreso."}, status=400)
+
+#             # Ahora sí obtener el progreso
+#             progress_ref = db.collection("users").document(uid).collection("progreso").document("progreso")
+#             progress_doc = progress_ref.get()
+
+#             if not progress_doc.exists:
+#                 return JsonResponse({"error": "Progreso no encontrado"}, status=404)
+
+#             return JsonResponse({"progress": progress_doc.to_dict()})
+        
+#         except Exception as e:
+#             return JsonResponse({"error": str(e)}, status=500)
+
+#     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
 @csrf_exempt
 def login_user(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             id_token = data.get("id_token")
-            # print(id_token)
-
+            
             if not id_token:
                 return JsonResponse({"error": "El id_token es requerido"}, status=400)
 
@@ -368,4 +481,3 @@ def login_user(request):
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
-
