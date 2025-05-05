@@ -26,62 +26,6 @@ def limpiar_texto(texto):
                 texto_limpio = re.sub(r"[\"'`]", "", texto)
                 return texto_limpio
 
-# @csrf_exempt
-# @require_token
-# def evaluar_codigo(request):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-#             descripcion_ejercicio = data.get("descripcion", "")
-#             codigo_estudiante = data.get("codigo", "")
-#             nombre_estudiante = data.get("nombre", "")
-#             # print(codigo_estudiante)
-            
-#             if not codigo_estudiante or not descripcion_ejercicio:
-#                 return JsonResponse({"error": "No se proporcionó código para evaluar."}, status=400)
-            
-#             prompt = f"""Eres un asistente de programación experto en JavaScript.
-#                 Tu tarea es evaluar el código de un estudiante, identificar errores y proporcionar retroalimentación detallada.  
-#                 Debes seguir estas reglas:  
-#                 1. **Analizar el código** proporcionado y determinar si cumple con los requisitos del ejercicio. En caso de cumplir con los requisitos retornar la frase "Buen trabajo, ejercicio completado"  
-#                 2. **Identificar errores sintácticos, semánticos o lógicos**, explicando por qué ocurren y cómo corregirlos.  
-#                 3. **La corrección debe ser unas cuantas líneas**  
-#                 4. **Explicarle al estudiante claramente en unas pocas líneas cuál es el error**  
-#                 5. **La salida debe ser solamente una lista donde un elemento de la lista corresponda a un error, si hay 2 errores, entonces dos elementos, si hay tres errores entonces tres elementos de la lista**  
-#                 6. **usa un tono amigable para el estudiante**  
-#                 7. **Cada elemento de la lista debe iniciar con ** y terminar en un salto de línea**                 
-#                 8. **Evita explicaciones adicionales y evita saludar**                
-#                 ---  
-#                 ### **Ejercicio a Evaluar**  
-#                 **Descripción:**  
-#                 {descripcion_ejercicio}  
-#                 ---  
-#                 ### **Código del Estudiante**  
-#                 ```javascript  
-#                 {codigo_estudiante}  
-#                 ```"""
-#             response = model.generate_content(prompt)
-#             formated_text = limpiar_texto(response.text)
-#             palabras = formated_text.split()
-#             sumary_text = formated_text
-#             if len(palabras) > 50:
-#                 response_model = model.generate_content(f'''Puedes por favor resumir esta información en un texto corto
-#                                                      , ten en cuenta que el texto sea para que lo lea un sintetizador, 
-#                                                      por favor que el texto este escrito en segunda persona con tono amable, 
-#                                                      por favor que sea solo texto plano, unicamente palabras para que puedan ser reproducidas por un 
-#                                                      sintetizador este es el texto a resumir: {formated_text}''')
-#                 sumary_text = response_model.text
-#             # print(response.text)
-            
-#             response = {
-#                 "texto": formated_text,
-#                 "resumen": sumary_text
-#                 }
-            
-#             return JsonResponse({"respuesta": response})
-#         except Exception as e:
-#             return JsonResponse({"error": str(e)}, status=500)
-#     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 @csrf_exempt
 @require_token
@@ -100,24 +44,24 @@ def evaluar_codigo(request):
             prompt = f"""Eres un asistente de programación experto en JavaScript.
                         Tu tarea es evaluar el código de un estudiante, identificar errores y proporcionar retroalimentación detallada.
                         Debes seguir estas reglas:
-                        1. Analizar el código proporcionado y determinar si cumple con los requisitos del ejercicio. En caso de cumplir con los requisitos retornar la frase "Buen trabajo, ejercicio completado"
+                        1. Analizar el código proporcionado y determinar si cumple con los requisitos del ejercicio. En caso de cumplir con los requisitos retornar la frase "Buen trabajo ejercicio completado"
                         2. Identificar errores sintácticos, semánticos o lógicos, explicando por qué ocurren y cómo corregirlos.
                         3. La corrección debe ser unas cuantas líneas
-                        4. Explicarle al estudiante claramente en unas pocas líneas cuál es el error
+                        4. Explicarle al estudiante claramente en unas pocas líneas cuál es el error y evita mencionar la linea en la que se encuentra el error
                         5. La salida debe ser solamente una lista donde un elemento de la lista corresponda a un error, si hay 2 errores, entonces dos elementos, si hay tres errores entonces tres elementos de la lista
                         6. Usa un tono amigable para el estudiante                        
-                        7. Evita explicaciones adicionales y evita saludar                      
+                        7. Evita explicaciones adicionales, evita saludar                  
 
                         ---
                         ### Ejercicio a Evaluar
                         Descripción:
                         {descripcion_ejercicio}
                         ---
-                        ### Código del Estudiante
-                        ```javascript
+                        ### Código del Estudiante en JavaScript:                        
                         {codigo_estudiante}
 
-                ```"""
+                ```"""                
+            print(prompt)
             response = model.generate_content(prompt)
             palabras = response.text.split()
             sumary_text = response.text
