@@ -10,9 +10,9 @@ from .rhubarb_lyp_sinc import get_phonemes
 from .files import audio_file_to_base64, read_json_transcript
 from .auth import require_token, require_token_async
 from decouple import config
-import whisper
+# import whisper
 
-whisper_model = whisper.load_model("base")
+# whisper_model = whisper.load_model("base")
 
 api_gemini = config('GEMINI_KEY')  
 genai.configure(api_key=api_gemini)
@@ -82,9 +82,6 @@ def evaluar_codigo(request):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
-
-
-
 
 @csrf_exempt
 @require_token
@@ -171,63 +168,63 @@ async def talking_chat(request):
                 return JsonResponse({"error": str(error)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
-@csrf_exempt
-async def transcribir_audio(request):
-    if request.method == 'POST':
-        try:
-            # Verifica que se haya enviado el archivo de audio
-            if 'audio' not in request.FILES:
-                return JsonResponse({"error": "No se proporcionó un archivo de audio."}, status=400)
+# @csrf_exempt
+# async def transcribir_audio(request):
+#     if request.method == 'POST':
+#         try:
+#             # Verifica que se haya enviado el archivo de audio
+#             if 'audio' not in request.FILES:
+#                 return JsonResponse({"error": "No se proporcionó un archivo de audio."}, status=400)
 
-            audio_file = request.FILES['audio']
-            file_path = uuid.uuid4()
-            audio_path = f"/tmp/{file_path}.mp3"    
+#             audio_file = request.FILES['audio']
+#             file_path = uuid.uuid4()
+#             audio_path = f"/tmp/{file_path}.mp3"    
                              
-            with open(audio_path, 'wb') as f:
-                for chunk in audio_file.chunks():
-                    f.write(chunk)
+#             with open(audio_path, 'wb') as f:
+#                 for chunk in audio_file.chunks():
+#                     f.write(chunk)
 
-            # Transcribe el audio a texto en español
-            result = whisper_model.transcribe(audio_path, language='es')
-            transcribed_text = result['text']
-            print(transcribed_text)
+#             # Transcribe el audio a texto en español
+#             result = whisper_model.transcribe(audio_path, language='es')
+#             transcribed_text = result['text']
+#             print(transcribed_text)
 
-            if not transcribed_text.strip():
-                return JsonResponse({"error": "No se pudo transcribir el audio."}, status=400)
+#             if not transcribed_text.strip():
+#                 return JsonResponse({"error": "No se pudo transcribir el audio."}, status=400)
 
-            # Opcional: historial de conversación
-            historial_raw = request.POST.get("historial", "[]")
-            historial = json.loads(historial_raw)                   
+#             # Opcional: historial de conversación
+#             historial_raw = request.POST.get("historial", "[]")
+#             historial = json.loads(historial_raw)                   
 
-            # Genera una respuesta basada en el texto transcrito
-            chat = model.start_chat(history=historial)
-            prompt = "En un texto muy corto, en un tono amable, de unas pocas líneas, ten muy en cuenta que el texto va a ser leído por un sintetizador. Respóndeme lo siguiente: " + transcribed_text
-            response = chat.send_message(prompt)
-            respuesta_limpia = limpiar_texto(response.text) 
-            audio_file_name = f"./audios/{file_path}"  
+#             # Genera una respuesta basada en el texto transcrito
+#             chat = model.start_chat(history=historial)
+#             prompt = "En un texto muy corto, en un tono amable, de unas pocas líneas, ten muy en cuenta que el texto va a ser leído por un sintetizador. Respóndeme lo siguiente: " + transcribed_text
+#             response = chat.send_message(prompt)
+#             respuesta_limpia = limpiar_texto(response.text) 
+#             audio_file_name = f"./audios/{file_path}"  
             
-            await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
-            await get_phonemes(file_path)
-            audio = await audio_file_to_base64(f"audios/{file_path}.wav")
-            lypsinc = await read_json_transcript(f"audios/{file_path}.json")            
+#             await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
+#             await get_phonemes(file_path)
+#             audio = await audio_file_to_base64(f"audios/{file_path}.wav")
+#             lypsinc = await read_json_transcript(f"audios/{file_path}.json")            
 
-            messages = [                
-                {
-                    "transcription": transcribed_text,
-                    "text": respuesta_limpia,
-                    "audio": audio,
-                    "lipsync": lypsinc,
-                    "facialExpression": "default",
-                    "animation": "TalkingOne",
-                }
-            ]
+#             messages = [                
+#                 {
+#                     "transcription": transcribed_text,
+#                     "text": respuesta_limpia,
+#                     "audio": audio,
+#                     "lipsync": lypsinc,
+#                     "facialExpression": "default",
+#                     "animation": "TalkingOne",
+#                 }
+#             ]
 
-            return JsonResponse({"messages": messages})
+#             return JsonResponse({"messages": messages})
 
-        except Exception as error:
-            return JsonResponse({"error": str(error)}, status=500)
+#         except Exception as error:
+#             return JsonResponse({"error": str(error)}, status=500)
 
-    return JsonResponse({"error": "Método no permitido"}, status=405)
+#     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 
 @csrf_exempt
