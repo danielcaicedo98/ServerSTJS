@@ -10,22 +10,18 @@ from .rhubarb_lyp_sinc import get_phonemes
 from .files import audio_file_to_base64, read_json_transcript
 from .auth import require_token, require_token_async
 from decouple import config
-# import whisper
-
-# whisper_model = whisper.load_model("base")
 
 api_gemini = config('GEMINI_KEY')  
 genai.configure(api_key=api_gemini)
 
-# Definir el modelo a utilizar
-version = 'models/gemini-1.5-flash'
+# Definimos el modelo a utilizar
+version = 'models/gemini-2.0-flash'
 model = genai.GenerativeModel(version)
 
 def limpiar_texto(texto):
                 # Eliminar comillas dobles, comillas simples y backticks
                 texto_limpio = re.sub(r"[\"'`]", "", texto)
                 return texto_limpio
-
 
 @csrf_exempt
 @require_token
@@ -44,7 +40,7 @@ def evaluar_codigo(request):
             prompt = f"""Eres un asistente de programación experto en JavaScript.
                         Tu tarea es evaluar el código de un estudiante, identificar errores y proporcionar retroalimentación detallada.
                         Debes seguir estas reglas:
-                        1. Analizar el código proporcionado y determinar si cumple con los requisitos del ejercicio. En caso de cumplir con los requisitos retornar la frase "Buen trabajo ejercicio completado"
+                        1. Analizar el código proporcionado y determinar si cumple con los requisitos del ejercicio.
                         2. Identificar errores sintácticos, semánticos o lógicos, explicando por qué ocurren y cómo corregirlos.
                         3. La corrección debe ser unas cuantas líneas
                         4. Explicarle al estudiante claramente en unas pocas líneas cuál es el error y evita mencionar la linea en la que se encuentra el error
@@ -137,7 +133,7 @@ async def talking_chat(request):
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
             chat = model.start_chat(history=historial)
-            response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas,ten muy en cuenta que el texto va a ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
+            response = chat.send_message("En un texto muy corto, en un tono amable, de unas pocas líneas,ten muy en cuenta que el texto va a ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
             respuesta_limpia = limpiar_texto(response.text)   
             
             # text_start = '''Hola cómo estás, me llamo Lucy y seré tu tutora, estoy aquí para apoyarte en tu aprendizaje

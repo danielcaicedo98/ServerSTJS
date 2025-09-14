@@ -19,7 +19,7 @@ def generate_jwt(uid, email):
     payload = {
         "uid": uid,
         "email": email,
-        "exp": (timezone.now() + timedelta(hours=1)).timestamp()
+        "exp": (timezone.now() + timedelta(hours=12)).timestamp()
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return token
@@ -39,49 +39,31 @@ DEFAULT_PROGRESS = {
     "sintaxis_basica": {
         "variables": {
             "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "segundo_ejercicio": False,            
         },
         "tipos_datos": {
             "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "segundo_ejercicio": False,            
         },
         "operadores_aritmeticos": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,           
         }
     },
     "estructuras_control": {
         "condicionales": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,            
         },
         "bucles": {
             "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "segundo_ejercicio": False,           
         },
         "control_flujo": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,            
         }
     },
     "funciones": {
         "definicion_declaracion": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,           
         },
         "funciones_anonimas_flecha": {
             "primer_ejercicio": False,
@@ -210,13 +192,16 @@ def login_with_google(request):
 
             user_ref = db.collection("users").document(uid)
             user_doc = user_ref.get()
+            
+            user_data = user_doc.to_dict()
+            user_progamming_language = user_data.get("lenguaje_programacion", False)
             token = generate_jwt(uid, email)
             if not user_doc.exists:
                 user_ref.set({
                     "email": email,
                     "name": name,
                     "token": token,
-                    "lenguaje_programacion": ""
+                    "lenguage": user_progamming_language
                 })
 
             # Crear documento de progreso si no existe
@@ -403,45 +388,6 @@ def get_progress(request):
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
-# @csrf_exempt
-# @require_token
-# def get_progress(request):
-#     """Obtiene el progreso de un usuario, verificando que haya definido su lenguaje de programación."""
-#     if request.method == 'GET':
-#         try:
-#             uid = request.GET.get("uid")
-
-#             if not uid:
-#                 return JsonResponse({"error": "UID es requerido"}, status=400)
-
-#             # Verificar primero si el usuario ha definido el lenguaje_programacion
-#             user_ref = db.collection("users").document(uid)
-#             user_doc = user_ref.get()
-
-#             if not user_doc.exists:
-#                 return JsonResponse({"error": "Usuario no encontrado"}, status=404)
-
-#             user_data = user_doc.to_dict()
-#             lenguaje_programacion = user_data.get("lenguaje_programacion", "").strip()
-
-#             if not lenguaje_programacion:
-#                 return JsonResponse({"error": "Debes seleccionar tu lenguaje de programación antes de ver el progreso."}, status=400)
-
-#             # Ahora sí obtener el progreso
-#             progress_ref = db.collection("users").document(uid).collection("progreso").document("progreso")
-#             progress_doc = progress_ref.get()
-
-#             if not progress_doc.exists:
-#                 return JsonResponse({"error": "Progreso no encontrado"}, status=404)
-
-#             return JsonResponse({"progress": progress_doc.to_dict()})
-        
-#         except Exception as e:
-#             return JsonResponse({"error": str(e)}, status=500)
-
-#     return JsonResponse({"error": "Método no permitido"}, status=405)
-
-
 @csrf_exempt
 def login_user(request):
     if request.method == 'POST':
@@ -459,10 +405,10 @@ def login_user(request):
             user = firebase_auth.get_user(uid)
             user_ref = db.collection("users").document(uid)
             user_doc = user_ref.get()        
-            
+                        
             user_data = user_doc.to_dict()
-            verified = user_data.get("verified", False)
-            print(verified)
+            verified = user_data.get("verified", False) 
+            user_progamming_language = user_data.get("lenguaje_programacion", False)
 
             if not user_doc.exists:
                 return JsonResponse({"error": "Usuario no registrado en la base de datos"}, status=404)
@@ -473,6 +419,7 @@ def login_user(request):
                 "uid": uid,
                 "email": user.email,
                 "name": user.display_name,
+                "language": user_progamming_language,
                 "verified": verified,
                 "token": token
             })
