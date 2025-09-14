@@ -3,11 +3,6 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 import re
-import uuid
-import asyncio
-from .text_to_speech import convert_text_to_speech
-from .rhubarb_lyp_sinc import get_phonemes
-from .files import audio_file_to_base64, read_json_transcript
 from .auth import require_token, require_token_async
 from decouple import config
 
@@ -62,11 +57,7 @@ def evaluar_codigo(request):
             palabras = response.text.split()
             sumary_text = response.text
             if len(palabras) > 50:
-                response_model = model.generate_content(f'''Puedes por favor resumir esta información en un texto corto
-                                                     , ten en cuenta que el texto sea para que lo lea un sintetizador, 
-                                                     por favor que el texto este escrito en segunda persona con tono amable, 
-                                                     por favor que sea solo texto plano, unicamente palabras para que puedan ser reproducidas por un 
-                                                     sintetizador este es el texto a resumir: {response.text}''')
+                response_model = model.generate_content(f'''Puedes por favor resumir esta información en un texto corto, ten en cuenta que el texto sea para que lo lea por el sitetizador de Google, por favor que el texto este escrito en segunda persona con tono amable, por favor que sea solo texto plano, unicamente palabras para que puedan ser reproducidas por un sintetizador este es el texto a resumir: {response.text}''')
                 sumary_text = response_model.text
             
             response = {
@@ -111,7 +102,7 @@ def free_conversation(request):
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
             chat = model.start_chat(history=historial)
-            response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas y que el texto pueda ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
+            response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas y que el texto pueda ser leído por el sitetizador de Google, respondeme lo siguiente: " + mensaje + ".")            
 
             return JsonResponse({
                 "respuesta": response.text                
@@ -133,126 +124,12 @@ async def talking_chat(request):
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
             chat = model.start_chat(history=historial)
-            response = chat.send_message("En un texto muy corto, en un tono amable, de unas pocas líneas,ten muy en cuenta que el texto va a ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
-            respuesta_limpia = limpiar_texto(response.text)   
-            
-            # text_start = '''Hola cómo estás, me llamo Lucy y seré tu tutora, estoy aquí para apoyarte en tu aprendizaje
-            #     por favor cuentame un poco sobre ti. Dime qué lenguaje de programación ya conoces?'''
-            
-            # unique_id = str(uuid.uuid4())
-            # file_name = f"mensaje-{unique_id}"
-            # audio_file_name = f"./audios/{file_name}"    
-            
-            # await convert_text_to_speech(text=text_start, file_name=audio_file_name)
-            # await get_phonemes(file_name)
-            # audio = await audio_file_to_base64(f"audios/{file_name}.wav")
-            # lypsinc = await read_json_transcript(f"audios/{file_name}.json")            
+            response = chat.send_message("Responde siempre en un texto muy breve y en tono amable. El texto será leído por un sintetizador de voz, así que debe sonar natural. No uses símbolos, emoticones ni signos innecesarios. Solo responde a preguntas relacionadas con JavaScript o programación. Si la pregunta no es de programación, responde diciendo de manera cordial que solo puedes hablar de JavaScript. Mi pregunta:" + mensaje + ".")            
+            respuesta_limpia = limpiar_texto(response.text)             
             
             messages = [
                 {
                     "text": respuesta_limpia,                    
-                    "facialExpression": "default",
-                    "animation": "TalkingOne",
-                }
-            ]
-
-            return JsonResponse({"messages":messages})
-        except Exception as error:
-            if hasattr(error, 'response') and getattr(error.response, 'status', None) == 429:
-                pass
-            else:            
-                return JsonResponse({"error": str(error)}, status=500)
-    return JsonResponse({"error": "Método no permitido"}, status=405)
-
-# @csrf_exempt
-# async def transcribir_audio(request):
-#     if request.method == 'POST':
-#         try:
-#             # Verifica que se haya enviado el archivo de audio
-#             if 'audio' not in request.FILES:
-#                 return JsonResponse({"error": "No se proporcionó un archivo de audio."}, status=400)
-
-#             audio_file = request.FILES['audio']
-#             file_path = uuid.uuid4()
-#             audio_path = f"/tmp/{file_path}.mp3"    
-                             
-#             with open(audio_path, 'wb') as f:
-#                 for chunk in audio_file.chunks():
-#                     f.write(chunk)
-
-#             # Transcribe el audio a texto en español
-#             result = whisper_model.transcribe(audio_path, language='es')
-#             transcribed_text = result['text']
-#             print(transcribed_text)
-
-#             if not transcribed_text.strip():
-#                 return JsonResponse({"error": "No se pudo transcribir el audio."}, status=400)
-
-#             # Opcional: historial de conversación
-#             historial_raw = request.POST.get("historial", "[]")
-#             historial = json.loads(historial_raw)                   
-
-#             # Genera una respuesta basada en el texto transcrito
-#             chat = model.start_chat(history=historial)
-#             prompt = "En un texto muy corto, en un tono amable, de unas pocas líneas, ten muy en cuenta que el texto va a ser leído por un sintetizador. Respóndeme lo siguiente: " + transcribed_text
-#             response = chat.send_message(prompt)
-#             respuesta_limpia = limpiar_texto(response.text) 
-#             audio_file_name = f"./audios/{file_path}"  
-            
-#             await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
-#             await get_phonemes(file_path)
-#             audio = await audio_file_to_base64(f"audios/{file_path}.wav")
-#             lypsinc = await read_json_transcript(f"audios/{file_path}.json")            
-
-#             messages = [                
-#                 {
-#                     "transcription": transcribed_text,
-#                     "text": respuesta_limpia,
-#                     "audio": audio,
-#                     "lipsync": lypsinc,
-#                     "facialExpression": "default",
-#                     "animation": "TalkingOne",
-#                 }
-#             ]
-
-#             return JsonResponse({"messages": messages})
-
-#         except Exception as error:
-#             return JsonResponse({"error": str(error)}, status=500)
-
-#     return JsonResponse({"error": "Método no permitido"}, status=405)
-
-
-@csrf_exempt
-@require_token_async
-async def talking_chat_complete(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            mensaje = data.get("message", "")
-            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional    
-            if not mensaje:
-                return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
-
-            chat = model.start_chat(history=historial)
-            # response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas,ten muy en cuenta que el texto va a ser leído por un sistetizador respondeme lo siguiente: " + mensaje + ".")            
-            response = chat.send_message(mensaje)
-            respuesta_limpia = limpiar_texto(response.text)
-
-            unique_id = str(uuid.uuid4())
-            file_name = f"mensaje-{unique_id}"
-            audio_file_name = f"./audios/{file_name}"  
-            
-            await convert_text_to_speech(text=respuesta_limpia, file_name=audio_file_name)
-            await get_phonemes(file_name)
-            audio = await audio_file_to_base64(f"audios/{file_name}.wav")
-            lypsinc = await read_json_transcript(f"audios/{file_name}.json")            
-            
-            messages = [
-                {
-                    "text": respuesta_limpia,
-                    "audio": audio,
-                    "lipsync": lypsinc,
                     "facialExpression": "default",
                     "animation": "TalkingOne",
                 }

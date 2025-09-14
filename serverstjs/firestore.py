@@ -218,7 +218,6 @@ def login_with_google(request):
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
-
 @csrf_exempt
 def register_user(request):
     if request.method == 'POST':
