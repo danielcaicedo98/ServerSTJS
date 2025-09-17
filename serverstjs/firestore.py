@@ -427,3 +427,66 @@ def login_user(request):
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+@csrf_exempt
+@require_token
+def update_navigation(request):
+    """Guarda la última posición de navegación de un usuario"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            uid = data.get("uid")
+            category = data.get("category")      # ej. "sintaxis_basica"
+            subcategory = data.get("subcategory") # ej. "variables"
+            index = data.get("index", 0)          # posición dentro del subtema
+
+            if not uid or not category or not subcategory:
+                return JsonResponse({"error": "Todos los campos son requeridos"}, status=400)
+
+            # Documento único por usuario → guarda solo la última posición
+            nav_ref = db.collection("users").document(uid).collection("navigation").document("last_position")
+
+            nav_ref.set({
+                "category": category,
+                "subcategory": subcategory,
+                "index": index
+            })
+
+            return JsonResponse({
+                "message": "Navegación actualizada",
+                "data": {
+                    "category": category,
+                    "subcategory": subcategory,
+                    "index": index
+                }
+            }, status=200)
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+@csrf_exempt
+@require_token
+def get_user_navigation(request):
+    """Obtiene la última posición de navegación de un usuario"""
+    if request.method == 'GET':
+        try:
+            uid = request.GET.get("uid")
+            if not uid:
+                return JsonResponse({"error": "El uid es requerido"}, status=400)
+
+            nav_ref = db.collection("users").document(uid).collection("navigation").document("last_position")
+            nav_doc = nav_ref.get()
+
+            if not nav_doc.exists:
+                return JsonResponse({}, status=200)
+
+            return JsonResponse(nav_doc.to_dict(), status=200)
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
