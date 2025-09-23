@@ -32,26 +32,27 @@ def evaluar_codigo(request):
             if not codigo_estudiante or not descripcion_ejercicio:
                 return JsonResponse({"error": "No se proporcionó código para evaluar."}, status=400)
             
-            prompt = f"""Eres un asistente de programación experto en JavaScript.
-                        Tu tarea es evaluar el código de un estudiante, identificar errores y proporcionar retroalimentación detallada.
-                        Debes seguir estas reglas:
-                        1. Analizar el código proporcionado y determinar si cumple con los requisitos del ejercicio.
-                        2. Identificar errores sintácticos, semánticos o lógicos, explicando por qué ocurren y cómo corregirlos.
-                        3. La corrección debe ser unas cuantas líneas
-                        4. Explicarle al estudiante claramente en unas pocas líneas cuál es el error y evita mencionar la linea en la que se encuentra el error
-                        5. La salida debe ser solamente una lista donde un elemento de la lista corresponda a un error, si hay 2 errores, entonces dos elementos, si hay tres errores entonces tres elementos de la lista
-                        6. Usa un tono amigable para el estudiante                        
-                        7. Evita explicaciones adicionales, evita saludar                  
+            prompt = f"""Eres un asistente experto en JavaScript.
+Tu tarea es evaluar el código de un estudiante, identificar errores y proporcionar retroalimentación amigable, directa y útil para guiarlo hacia la solución correcta.
+Debes seguir estas reglas:
 
-                        ---
-                        ### Ejercicio a Evaluar
-                        Descripción:
-                        {descripcion_ejercicio}
-                        ---
-                        ### Código del Estudiante en JavaScript:                        
-                        {codigo_estudiante}
+1. Analiza el código proporcionado y determina si cumple con los requisitos del ejercicio.
+2. Presta especial atención a que la salida en consola coincida exactamente con lo que se espera según la descripción del ejercicio.
+3. Si el código está incompleto, vacío o sólo contiene comentarios, considera esto un error y proporciona instrucciones claras sobre qué debe hacer para completarlo.
+4. Identifica errores sintácticos, semánticos o lógicos y explica brevemente por qué ocurren.
+5. Sugiere correcciones o pistas en unas pocas líneas que permitan avanzar hacia la solución correcta.
+6. Habla directamente al estudiante usando “tú” o “debes…”, evitando referirte al estudiante en tercera persona.
+7. La salida debe ser solamente una lista donde cada elemento corresponda a un error detectado y la instrucción para corregirlo.
+8. Evita explicaciones adicionales, saludos o comentarios fuera de la lista de errores.
+9. Usa un tono amigable y motivador.
 
-                ```"""                
+---
+### Ejercicio a Evaluar:
+{descripcion_ejercicio}
+---
+### Código escrito por el estudiante:
+{codigo_estudiante}
+"""                
             print(prompt)
             response = model.generate_content(prompt)
             palabras = response.text.split()
@@ -85,29 +86,6 @@ def free_chat(request):
             # respuesta_limpia = limpiar_texto(response.text)
 
             return JsonResponse({"response": response.text})
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-    return JsonResponse({"error": "Método no permitido"}, status=405)
-
-@csrf_exempt
-@require_token
-def free_conversation(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            mensaje = data.get("message", "")
-            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional           
-
-            if not mensaje:
-                return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
-
-            chat = model.start_chat(history=historial)
-            response = chat.send_message("En un texto muy corto, en un tono amabla, de unas pocas líneas y que el texto pueda ser leído por el sitetizador de Google, respondeme lo siguiente: " + mensaje + ".")            
-
-            return JsonResponse({
-                "respuesta": response.text                
-            })
-
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Método no permitido"}, status=405)

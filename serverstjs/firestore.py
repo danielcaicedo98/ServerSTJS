@@ -12,7 +12,6 @@ from firebase_admin import auth as firebase_auth
 from decouple import config
 from evaluador.auth import require_token
 
-
 SECRET_KEY = config('SECRET_KEY')
 
 def generate_jwt(uid, email):
@@ -66,76 +65,42 @@ DEFAULT_PROGRESS = {
             "primer_ejercicio": False,           
         },
         "funciones_anonimas_flecha": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,            
         },
         "parametros_retorno": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,            
         },
         "alcance_variables": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,            
         },
         "recursion": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,            
         },
         "closures": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,            
         }
     },
     "objetos_arreglos": {
         "introduccion_objetos": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,            
         },
         "metodos_propiedades_objetos": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,            
         },
         "creacion_manipulacion_arreglos": {
-            "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
+            "primer_ejercicio": False,            
         },
         "metodos_arreglos": {
             "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
         },
         "desestructuracion_objetos": {
             "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
         },
         "desestructuracion_arreglos": {
             "primer_ejercicio": False,
-            "segundo_ejercicio": False,
-            "tercer_ejercicio": False,
-            "cuarto_ejercicio": False
         }
     }
 }
-
 
 @csrf_exempt
 @require_token  

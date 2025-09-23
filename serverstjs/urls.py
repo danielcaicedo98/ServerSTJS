@@ -23,7 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('evaluar_codigo/', evaluar_codigo),
     path('free_chat/', free_chat, name='free_chat'),
-    path('free_conversation/', free_conversation, name='free_conversation'),
     path('talking_chat/', talking_chat, name='talking_chat'),
     path('registro/', register_user, name='registro'),
     path('login_google/', login_with_google, name='login_google'),
@@ -34,7 +33,5 @@ urlpatterns = [
     path('actualizar_usuario/', update_user, name='actualizar_usuario'), 
     path('verificar_lenguaje/', check_language, name='verificar_lenguaje'),    
     path('update_navigation/', update_navigation, name='actualizar_navegacion'),    
-    path('get_user_navigation/', get_user_navigation, name='obtener_navegacion'),     
-     
-     
+    path('get_user_navigation/', get_user_navigation, name='obtener_navegacion'),      
 ]
