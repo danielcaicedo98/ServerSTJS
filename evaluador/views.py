@@ -42,9 +42,9 @@ Debes seguir estas reglas:
 4. Identifica errores sintácticos, semánticos o lógicos y explica brevemente por qué ocurren.
 5. Sugiere correcciones o pistas en unas pocas líneas que permitan avanzar hacia la solución correcta.
 6. Habla directamente al estudiante usando “tú” o “debes…”, evitando referirte al estudiante en tercera persona.
-7. La salida debe ser solamente una lista donde cada elemento corresponda a un error detectado y la instrucción para corregirlo.
-8. Evita explicaciones adicionales, saludos o comentarios fuera de la lista de errores.
-9. Usa un tono amigable y motivador.
+7. Evita explicaciones adicionales, saludos o comentarios fuera de la lista de errores.
+8. Usa un tono amigable y motivador.
+9. Retorna una lista resumida pero sustancial
 
 ---
 ### Ejercicio a Evaluar:
@@ -53,7 +53,6 @@ Debes seguir estas reglas:
 ### Código escrito por el estudiante:
 {codigo_estudiante}
 """                
-            print(prompt)
             response = model.generate_content(prompt)
             palabras = response.text.split()
             sumary_text = response.text
@@ -102,12 +101,17 @@ async def talking_chat(request):
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
             chat = model.start_chat(history=historial)
-            response = chat.send_message("Responde siempre en un texto muy breve y en tono amable. El texto será leído por un sintetizador de voz, así que debe sonar natural. No uses símbolos, emoticones ni signos innecesarios. Solo responde a preguntas relacionadas con JavaScript o programación. Si la pregunta no es de programación, responde diciendo de manera cordial que solo puedes hablar de JavaScript. Mi pregunta:" + mensaje + ".")            
-            respuesta_limpia = limpiar_texto(response.text)             
+            response = chat.send_message("Responde siempre en un texto muy breve y en tono amable. Solo responde a preguntas relacionadas con JavaScript o programación. Si la pregunta no es de programación, responde diciendo de manera cordial que solo puedes hablar de JavaScript. Mi pregunta:" + mensaje + ".")            
+            palabras = response.text.split()
+            sumary_text = response.text
+            if len(palabras) > 10:
+                response_model = model.generate_content(f'''Puedes por favor resumir esta información en un texto corto, ten en cuenta que el texto sea para que lo lea por el sitetizador de Google, por favor que el texto este escrito en segunda persona con tono amable, por favor que sea solo texto plano, unicamente palabras para que puedan ser reproducidas por un sintetizador este es el texto a resumir. No incluyas ni iconos ni emoticones: {response.text}''')
+                sumary_text = response_model.text   
             
             messages = [
                 {
-                    "text": respuesta_limpia,                    
+                    "text": response.text,
+                    "summary": sumary_text,                    
                     "facialExpression": "default",
                     "animation": "TalkingOne",
                 }
