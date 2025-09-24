@@ -93,10 +93,7 @@ DEFAULT_PROGRESS = {
         "metodos_arreglos": {
             "primer_ejercicio": False,
         },
-        "desestructuracion_objetos": {
-            "primer_ejercicio": False,
-        },
-        "desestructuracion_arreglos": {
+        "desestructuracion_arreglos_objetos": {
             "primer_ejercicio": False,
         }
     }
