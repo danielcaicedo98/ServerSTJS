@@ -33,5 +33,8 @@ urlpatterns = [
     path('actualizar_usuario/', update_user, name='actualizar_usuario'), 
     path('verificar_lenguaje/', check_language, name='verificar_lenguaje'),    
     path('update_navigation/', update_navigation, name='actualizar_navegacion'),    
-    path('get_user_navigation/', get_user_navigation, name='obtener_navegacion'),      
+    path('get_user_navigation/', get_user_navigation, name='obtener_navegacion'),
+    path('capture_user_exercises/', capture_user_exercises, name='capture_user_exercises'),
+    path('get_user_exercises/', get_user_exercises, name='get_user_exercises'),          
+              
 ]

@@ -46,6 +46,9 @@ DEFAULT_PROGRESS = {
         },
         "operadores_aritmeticos": {
             "primer_ejercicio": False,           
+        },
+        "reto_progamacion_sintaxis": {
+            "primer_ejercicio": False,           
         }
     },
     "estructuras_control": {
@@ -58,6 +61,9 @@ DEFAULT_PROGRESS = {
         },
         "control_flujo": {
             "primer_ejercicio": False,            
+        },
+        "reto_progamacion_estructuras": {
+            "primer_ejercicio": False,           
         }
     },
     "funciones": {
@@ -78,6 +84,9 @@ DEFAULT_PROGRESS = {
         },
         "closures": {
             "primer_ejercicio": False,            
+        },
+        "reto_progamacion_funciones": {
+            "primer_ejercicio": False,           
         }
     },
     "objetos_arreglos": {
@@ -95,6 +104,9 @@ DEFAULT_PROGRESS = {
         },
         "desestructuracion_arreglos_objetos": {
             "primer_ejercicio": False,
+        },
+        "reto_progamacion_objetos": {
+            "primer_ejercicio": False,           
         }
     }
 }
@@ -447,6 +459,64 @@ def get_user_navigation(request):
                 return JsonResponse({}, status=200)
 
             return JsonResponse(nav_doc.to_dict(), status=200)
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+@csrf_exempt
+@require_token
+def capture_user_exercises(request):
+    """Actualiza los ejercicios de un usuario"""
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            uid = data.get("uid")
+            ejercicios = data.get("datos_ejercicios")
+
+            if not uid or not ejercicios:
+                return JsonResponse({"error": "UID y ejercicios son requeridos"}, status=400)
+
+            user_ref = db.collection("users").document(uid)
+            user_doc = user_ref.get()
+
+            if not user_doc.exists:
+                return JsonResponse({"error": "Usuario no encontrado"}, status=404)
+
+            # Merge de ejercicios existentes con los nuevos
+            for key, value in ejercicios.items():
+                # Actualizar o crear la entrada del ejercicio
+                user_ref.set({"datos_ejercicios": {key: value}}, merge=True)
+
+            return JsonResponse({"message": "Ejercicios actualizados correctamente"})
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+@csrf_exempt
+@require_token
+def get_user_exercises(request):
+    """Obtiene los ejercicios de un usuario"""
+    if request.method == "GET":
+        try:
+            uid = request.GET.get("uid")
+            if not uid:
+                return JsonResponse({"error": "UID es requerido"}, status=400)
+
+            user_ref = db.collection("users").document(uid)
+            user_doc = user_ref.get()
+
+            if not user_doc.exists:
+                return JsonResponse({"error": "Usuario no encontrado"}, status=404)
+
+            user_data = user_doc.to_dict()
+            ejercicios = user_data.get("datos_ejercicios", {})  # Traemos solo la sección de ejercicios
+
+            return JsonResponse({"datos_ejercicios": ejercicios})
 
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
