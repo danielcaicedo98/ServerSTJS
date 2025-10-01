@@ -47,12 +47,13 @@ Debes seguir estas reglas:
 9. Retorna una lista resumida pero sustancial
 
 ---
-### Ejercicio a Evaluar:
+### Descripción del ejercicio e información del estudiante:
 {descripcion_ejercicio}
 ---
 ### Código escrito por el estudiante:
 {codigo_estudiante}
 """                
+            print(prompt)
             response = model.generate_content(prompt)
             palabras = response.text.split()
             sumary_text = response.text
@@ -97,11 +98,12 @@ async def talking_chat(request):
             data = json.loads(request.body)
             mensaje = data.get("message", "")
             historial = data.get("historial", [])  # <- Lista de mensajes previos opcional    
+            contexto = data.get("contexto","")
             if not mensaje:
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
             chat = model.start_chat(history=historial)
-            response = chat.send_message("Responde siempre en un texto muy breve y en tono amable. Solo responde a preguntas relacionadas con JavaScript o programación. Si la pregunta no es de programación, responde diciendo de manera cordial que solo puedes hablar de JavaScript. Mi pregunta:" + mensaje + ".")            
+            response = chat.send_message("Responde siempre en un texto muy breve y en tono amable. Solo responde a preguntas relacionadas con JavaScript o programación. Si la pregunta no es de programación, responde diciendo de manera cordial que solo puedes hablar de JavaScript. Mi pregunta:" + mensaje + contexto)            
             palabras = response.text.split()
             sumary_text = response.text
             if len(palabras) > 10:
