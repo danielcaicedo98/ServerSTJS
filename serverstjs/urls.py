@@ -35,6 +35,7 @@ urlpatterns = [
     path('update_navigation/', update_navigation, name='actualizar_navegacion'),    
     path('get_user_navigation/', get_user_navigation, name='obtener_navegacion'),
     path('capture_user_exercises/', capture_user_exercises, name='capture_user_exercises'),
-    path('get_user_exercises/', get_user_exercises, name='get_user_exercises'),          
-              
+    path('get_user_exercises/', get_user_exercises, name='get_user_exercises'),    
+    path('update_student_profile/', update_student_profile, name='update_student_profile'),
+    path('get_student_profile/', get_student_profile, name='get_student_profile'), 
 ]

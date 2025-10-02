@@ -522,3 +522,56 @@ def get_user_exercises(request):
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+@csrf_exempt
+@require_token
+def update_student_profile(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            uid = data.get("uid")
+            perfil_texto = data.get("perfil_texto")
+
+            if not uid or not perfil_texto:
+                return JsonResponse({"error": "UID y perfil_texto son requeridos"}, status=400)
+
+            user_ref = db.collection("users").document(uid)
+            if not user_ref.get().exists:
+                return JsonResponse({"error": "Usuario no encontrado"}, status=404)
+
+            # Guardar/actualizar perfil del estudiante
+            user_ref.update({
+                "perfil_texto": perfil_texto,
+                "perfil_actualizado": timezone.now().isoformat()
+            })
+
+            return JsonResponse({"message": "Perfil actualizado correctamente"})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
+
+@csrf_exempt
+@require_token
+def get_student_profile(request):
+    if request.method == "GET":
+        try:
+            uid = request.GET.get("uid")
+            if not uid:
+                return JsonResponse({"error": "UID es requerido"}, status=400)
+
+            user_ref = db.collection("users").document(uid)
+            user_doc = user_ref.get()
+
+            if not user_doc.exists:
+                return JsonResponse({"error": "Usuario no encontrado"}, status=404)
+
+            user_data = user_doc.to_dict()
+            perfil_texto = user_data.get("perfil_texto", "")
+
+            return JsonResponse({"perfil_texto": perfil_texto}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
