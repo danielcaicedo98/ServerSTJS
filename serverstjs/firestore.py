@@ -137,6 +137,15 @@ DEFAULT_EXERCISES = {
     },
 }    
 
+def create_progress_document(user_id):
+    """Crea el documento de progreso si no existe"""
+    user_ref = db.collection("users").document(user_id)
+    
+    progress_ref = db.collection("users").document(user_id).collection("progreso").document("progreso")
+    if not progress_ref.get().exists:
+        progress_ref.set(DEFAULT_PROGRESS)   
+    
+
 @csrf_exempt
 @require_token  
 def update_user(request):
@@ -168,23 +177,6 @@ def update_user(request):
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
-
-def create_progress_document(user_id):
-    """Crea el documento de progreso si no existe"""
-    user_ref = db.collection("users").document(user_id)
-    
-    progress_ref = db.collection("users").document(user_id).collection("progreso").document("progreso")
-    if not progress_ref.get().exists:
-        progress_ref.set(DEFAULT_PROGRESS)
-    
-    user_data = user_ref.get().to_dict()
-    if not user_data or "perfil_texto" not in user_data:
-        user_ref.set(DEFAULT_PROFILE, merge=True)
-
-    # Ejercicios
-    if "datos_ejercicios" not in user_data:
-        user_ref.set({"datos_ejercicios": DEFAULT_EXERCISES}, merge=True)
-
 @csrf_exempt
 def login_with_google(request):
     if request.method == 'POST':
@@ -211,7 +203,10 @@ def login_with_google(request):
                     "email": email,
                     "name": name,
                     "token": token,
-                    "lenguage": user_progamming_language
+                    "lenguage": user_progamming_language,
+                    "datos_ejercicios": DEFAULT_EXERCISES,
+                    "perfil_actualizado": "",
+                    "perfil_texto": DEFAULT_PROFILE
                 })
 
             # Crear documento de progreso si no existe
@@ -261,10 +256,13 @@ def register_user(request):
                 "verified": False,
                 "verification_code": code,
                 "lenguaje_programacion": "",
-                "code_expires_at": (timezone.now() + timedelta(minutes=10)).isoformat()
+                "code_expires_at": (timezone.now() + timedelta(minutes=10)).isoformat(),
+                "datos_ejercicios": DEFAULT_EXERCISES,
+                "perfil_actualizado": "",
+                "perfil_texto": DEFAULT_PROFILE
             })
 
-            create_progress_document(user.uid)
+            create_progress_document(user.uid)           
 
             return JsonResponse({"message": "Usuario registrado. Verifica tu email", "uid": user.uid})
 
