@@ -138,9 +138,7 @@ DEFAULT_EXERCISES = {
 }    
 
 def create_progress_document(user_id):
-    """Crea el documento de progreso si no existe"""
-    user_ref = db.collection("users").document(user_id)
-    
+    """Crea el documento de progreso si no existe"""    
     progress_ref = db.collection("users").document(user_id).collection("progreso").document("progreso")
     if not progress_ref.get().exists:
         progress_ref.set(DEFAULT_PROGRESS)   
