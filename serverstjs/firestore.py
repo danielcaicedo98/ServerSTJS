@@ -137,11 +137,21 @@ DEFAULT_EXERCISES = {
     },
 }    
 
+DEFAULT_NAVIGATION = {
+    "category": "sintaxis_basica",
+    "index": 0,
+    "subcategory": "variables"
+}
+
 def create_progress_document(user_id):
     """Crea el documento de progreso si no existe"""    
     progress_ref = db.collection("users").document(user_id).collection("progreso").document("progreso")
     if not progress_ref.get().exists:
         progress_ref.set(DEFAULT_PROGRESS)   
+        
+    navigation_ref = db.collection("users").document(user_id).collection("navigation").document("last_position")
+    if not navigation_ref.get().exists:
+        progress_ref.set(DEFAULT_NAVIGATION)   
     
 
 @csrf_exempt
@@ -193,7 +203,7 @@ def login_with_google(request):
             user_ref = db.collection("users").document(uid)
             user_doc = user_ref.get()
             
-            user_data = user_doc.to_dict()
+            user_data = user_doc.to_dict() if user_doc.exists else {}
             user_progamming_language = user_data.get("lenguaje_programacion", False)
             token = generate_jwt(uid, email)
             if not user_doc.exists:
