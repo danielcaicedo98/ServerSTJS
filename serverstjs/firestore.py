@@ -151,7 +151,7 @@ def create_progress_document(user_id):
         
     navigation_ref = db.collection("users").document(user_id).collection("navigation").document("last_position")
     if not navigation_ref.get().exists:
-        progress_ref.set(DEFAULT_NAVIGATION)   
+        navigation_ref.set(DEFAULT_NAVIGATION)   
     
 
 @csrf_exempt
