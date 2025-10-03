@@ -47,7 +47,7 @@ DEFAULT_PROGRESS = {
         "operadores_aritmeticos": {
             "primer_ejercicio": False,           
         },
-        "reto_progamacion_sintaxis": {
+        "reto_programacion_sintaxis": {
             "primer_ejercicio": False,           
         }
     },
@@ -62,7 +62,7 @@ DEFAULT_PROGRESS = {
         "control_flujo": {
             "primer_ejercicio": False,            
         },
-        "reto_progamacion_estructuras": {
+        "reto_programacion_estructuras": {
             "primer_ejercicio": False,           
         }
     },
@@ -85,7 +85,7 @@ DEFAULT_PROGRESS = {
         "closures": {
             "primer_ejercicio": False,            
         },
-        "reto_progamacion_funciones": {
+        "reto_programacion_funciones": {
             "primer_ejercicio": False,           
         }
     },
@@ -105,7 +105,7 @@ DEFAULT_PROGRESS = {
         "desestructuracion_arreglos_objetos": {
             "primer_ejercicio": False,
         },
-        "reto_progamacion_objetos": {
+        "reto_programacion_objetos": {
             "primer_ejercicio": False,           
         }
     }
