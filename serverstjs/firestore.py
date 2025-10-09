@@ -122,13 +122,13 @@ pero a medida que resuelvas ejercicios iré construyendo tu perfil personalizado
 # Ejercicios por defecto (estructura inicial vacía)
 DEFAULT_EXERCISES = {
     "sintaxis_basica": {
-        "variables": {
+        "variables.primer_ejercicio": {
             "resumen_retroalimentacion": [],
             "numero_intentos": 0,
             "errores_comunes": [],
             "preguntas_estudiante": []
         },
-        "tipos_datos": {
+        "tipos_datos.primer_ejercicio": {
             "resumen_retroalimentacion": [],
             "numero_intentos": 0,
             "errores_comunes": [],
