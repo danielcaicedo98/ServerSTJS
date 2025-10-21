@@ -57,8 +57,27 @@ Debes seguir estas reglas:
             response = model.generate_content(prompt)
             palabras = response.text.split()
             sumary_text = response.text
-            if len(palabras) > 50:
-                response_model = model.generate_content(f'''Puedes por favor resumir esta información en un texto corto, ten en cuenta que el texto sea para que lo lea por el sitetizador de Google, por favor que el texto este escrito en segunda persona con tono amable, por favor que sea solo texto plano, unicamente palabras para que puedan ser reproducidas por un sintetizador este es el texto a resumir: {response.text}''')
+            sumary_prompt = f"""
+            [Rol/Identidad]
+            Eres un asistente especializado en generar textos breves y naturales para ser hablados por un sintetizador de voz (TTS) de Google.
+
+            [Objetivo/Tarea]
+            Resume el siguiente texto en una versión más corta (máximo 2 o 3 frases), pensada para ser escuchada por un estudiante. 
+            El resumen debe estar escrito en segunda persona, en tono amable y claro.
+
+            [Instrucciones específicas]
+            - Solo usa texto plano (sin emojis, sin signos especiales, sin formato).
+            - El resultado debe sonar natural al ser leído por voz.
+            - Mantén el contenido educativo y positivo.
+
+            [Texto original]
+            {response.text}
+
+            [Salida esperada]
+            Texto corto en segunda persona, amable y natural, listo para ser reproducido por el sintetizador de voz.
+            """
+            if len(palabras) > 60:
+                response_model = model.generate_content(sumary_prompt)
                 sumary_text = response_model.text
             
             response = {
@@ -97,17 +116,62 @@ async def talking_chat(request):
         try:
             data = json.loads(request.body)
             mensaje = data.get("message", "")
-            historial = data.get("historial", [])  # <- Lista de mensajes previos opcional    
+            historial = data.get("historial", [])    
             contexto = data.get("contexto","")
+            talking_prompt = f"""
+            [Rol/Identidad]
+            Eres un tutor virtual experto en JavaScript, con una personalidad amable y didáctica. 
+            Te comunicas de manera clara, concisa y cercana. Tu propósito es ayudar al estudiante a aprender programación en JavaScript.
+
+            [Objetivo/Tarea]
+            Responde a la siguiente pregunta del estudiante en un texto muy breve (máximo 2 o 3 frases). 
+            Si la pregunta no tiene relación con JavaScript o programación, responde amablemente que solo puedes hablar sobre JavaScript.
+
+            [Contexto del estudiante]
+            Historial de conversación: {historial if historial else "Sin historial previo."}
+            Contexto adicional: {contexto}
+
+            [Entrada del estudiante]
+            Pregunta: "{mensaje}"
+
+            [Formato y tono deseado]
+            - Usa un tono amable, cercano y motivador.
+            - Redacta una respuesta natural, pensada para ser hablada por un avatar 3D.
+            - No incluyas emojis ni símbolos, solo texto plano.
+
+            [Salida esperada]
+            Respuesta breve y clara sobre JavaScript o una frase cordial indicando que solo puedes hablar de JavaScript.
+            """
+
             if not mensaje:
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
             chat = model.start_chat(history=historial)
-            response = chat.send_message("Responde siempre en un texto muy breve y en tono amable. Solo responde a preguntas relacionadas con JavaScript o programación. Si la pregunta no es de programación, responde diciendo de manera cordial que solo puedes hablar de JavaScript. Mi pregunta:" + mensaje + contexto)            
+            response = chat.send_message(talking_prompt)            
             palabras = response.text.split()
             sumary_text = response.text
-            if len(palabras) > 10:
-                response_model = model.generate_content(f'''Puedes por favor resumir esta información en un texto corto, ten en cuenta que el texto sea para que lo lea por el sitetizador de Google, por favor que el texto este escrito en segunda persona con tono amable, por favor que sea solo texto plano, unicamente palabras para que puedan ser reproducidas por un sintetizador este es el texto a resumir. No incluyas ni iconos ni emoticones: {response.text}''')
+            sumary_prompt = f"""
+            [Rol/Identidad]
+            Eres un asistente especializado en generar textos breves y naturales para ser hablados por un sintetizador de voz (TTS) de Google.
+
+            [Objetivo/Tarea]
+            Resume el siguiente texto en una versión más corta (máximo 2 o 3 frases), pensada para ser escuchada por un estudiante. 
+            El resumen debe estar escrito en segunda persona, en tono amable y claro.
+
+            [Instrucciones específicas]
+            - Solo usa texto plano (sin emojis, sin signos especiales, sin formato).
+            - El resultado debe sonar natural al ser leído por voz.
+            - Mantén el contenido educativo y positivo.
+
+            [Texto original]
+            {response.text}
+
+            [Salida esperada]
+            Texto corto en segunda persona, amable y natural, listo para ser reproducido por el sintetizador de voz.
+            """
+
+            if len(palabras) > 60:
+                response_model = model.generate_content(sumary_prompt)
                 sumary_text = response_model.text   
             
             messages = [
