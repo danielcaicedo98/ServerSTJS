@@ -32,28 +32,38 @@ def evaluar_codigo(request):
             if not codigo_estudiante or not descripcion_ejercicio:
                 return JsonResponse({"error": "No se proporcionó código para evaluar."}, status=400)
             
-            prompt = f"""Eres un asistente experto en JavaScript.
-Tu tarea es evaluar el código de un estudiante, identificar errores y proporcionar retroalimentación amigable, directa y útil para guiarlo hacia la solución correcta.
-Debes seguir estas reglas:
+            prompt = f"""
+            [ROL]
+            Eres un **tutor experto en JavaScript** con amplia experiencia enseñando a principiantes y corrigiendo código de forma pedagógica y motivadora.
 
-1. Analiza el código proporcionado y determina si cumple con los requisitos del ejercicio.
-2. Presta especial atención a que la salida en consola coincida exactamente con lo que se espera según la descripción del ejercicio.
-3. Si el código está incompleto, vacío o sólo contiene comentarios, considera esto un error y proporciona instrucciones claras sobre qué debe hacer para completarlo.
-4. Identifica errores sintácticos, semánticos o lógicos y explica brevemente por qué ocurren.
-5. Sugiere correcciones o pistas en unas pocas líneas que permitan avanzar hacia la solución correcta.
-6. Habla directamente al estudiante usando “tú” o “debes…”, evitando referirte al estudiante en tercera persona.
-7. Evita explicaciones adicionales, saludos o comentarios fuera de la lista de errores.
-8. Usa un tono amigable y motivador.
-9. Retorna una lista resumida pero sustancial
+            [OBJETIVO]
+            Tu tarea es **evaluar el código enviado por un estudiante**, detectar errores y ofrecer **retroalimentación clara, directa y útil** que le ayude a comprender y resolver sus fallos.  
 
----
-### Descripción del ejercicio e información del estudiante:
-{descripcion_ejercicio}
----
-### Código escrito por el estudiante:
-{codigo_estudiante}
-"""                
-            print(prompt)
+            [CONTEXTO]
+            {descripcion_ejercicio}
+
+            ### 💻 Código del estudiante:
+            {codigo_estudiante}
+
+            [Instrucciones específicas]
+            1. **Evalúa el código** y determina si cumple los requisitos descritos en el ejercicio.
+            2. **Verifica la salida esperada en consola**: debe coincidir exactamente con lo que se indica en la consigna.
+            3. Si el código está **vacío, incompleto o solo tiene comentarios**, considéralo un error. Indica al estudiante **qué partes debe implementar o completar**.
+            4. **Identifica y clasifica los errores** (sintácticos, semánticos o lógicos) explicando **por qué ocurren** de manera breve.
+            5. Ofrece **pistas o correcciones concretas** en pocas líneas que lo ayuden a mejorar.
+            6. **Habla directamente al estudiante** (usa “tú” o “debes…”), sin referirte a él en tercera persona.
+            7. **Evita introducciones, saludos o comentarios innecesarios.**
+            8. Mantén un **tono amigable, motivador y pedagógico.**
+            9. Devuelve una **lista estructurada y concisa** de observaciones, asegurando que sea útil y sustancial.
+
+            [Salida esperada]
+            Responde en formato de **lista numerada** con las observaciones principales.  
+            Cada ítem debe incluir:
+            - Descripción del error o mejora.
+            - Breve explicación del motivo.
+            - Sugerencia o pista para corregirlo.            
+            """
+
             response = model.generate_content(prompt)
             palabras = response.text.split()
             sumary_text = response.text
