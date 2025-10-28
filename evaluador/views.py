@@ -54,7 +54,7 @@ def evaluar_codigo(request):
             6. **Habla directamente al estudiante** (usa “tú” o “debes…”), sin referirte a él en tercera persona.
             7. **Evita introducciones, saludos o comentarios innecesarios.**
             8. Mantén un **tono amigable, motivador y pedagógico.**
-            9. Devuelve una **lista estructurada y concisa** de observaciones, asegurando que sea útil y sustancial.
+            9. Devuelve una **lista estructurada y concisa** de observaciones, asegurando que sea útil.
 
             [Salida esperada]
             Responde en formato de **lista numerada** con las observaciones principales.  
@@ -63,8 +63,15 @@ def evaluar_codigo(request):
             - Breve explicación del motivo.
             - Sugerencia o pista para corregirlo.            
             """
+            print("--------------------------------------------EVALUAR CODIGO--------------------")
+            print("PROMPT :\n")
+            print(prompt)
 
             response = model.generate_content(prompt)
+            
+            print("\n\nSALIDA :\n")
+            print(response.text)
+            print("--------------------------------------------FIN EVALUAR CODIGO--------------------")
             palabras = response.text.split()
             sumary_text = response.text
             sumary_prompt = f"""
@@ -95,6 +102,8 @@ def evaluar_codigo(request):
                 "resumen": sumary_text
             }
             
+            
+            
             return JsonResponse(response)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
@@ -111,9 +120,15 @@ def free_chat(request):
             if not mensaje:
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
+            print("-------------------------OPEN CHAT----------------------------------------")
+            print("PROMPT :\n")
+            print(mensaje)
             response = model.generate_content(mensaje)
             # respuesta_limpia = limpiar_texto(response.text)
-
+            print("\n\nSALIDA :\n")
+            print(response.text)
+            print("-------------------------FIN OPEN CHAT----------------------------------------")
+            
             return JsonResponse({"response": response.text})
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
@@ -128,7 +143,7 @@ async def talking_chat(request):
             mensaje = data.get("message", "")
             historial = data.get("historial", [])    
             contexto = data.get("contexto","")
-            talking_prompt = f"""
+            prompt = f"""
             [Rol/Identidad]
             Eres un tutor virtual experto en JavaScript, con una personalidad amable y didáctica. 
             Te comunicas de manera clara, concisa y cercana. Tu propósito es ayudar al estudiante a aprender programación en JavaScript.
@@ -152,14 +167,19 @@ async def talking_chat(request):
             [Salida esperada]
             Respuesta breve y clara sobre JavaScript o una frase cordial indicando que solo puedes hablar de JavaScript.
             """
-
+            print("-------------------------------CHAT INTERACTIVO-----------------------------")
+            print("PROMPT :\n")
+            print(prompt)
+            
             if not mensaje:
                 return JsonResponse({"error": "No se proporcionó ningún mensaje."}, status=400)
 
             chat = model.start_chat(history=historial)
-            response = chat.send_message(talking_prompt)            
+            response = chat.send_message(prompt)            
             palabras = response.text.split()
             sumary_text = response.text
+            
+            
             sumary_prompt = f"""
             [Rol/Identidad]
             Eres un asistente especializado en generar textos breves y naturales para ser hablados por un sintetizador de voz (TTS) de Google.
@@ -179,6 +199,9 @@ async def talking_chat(request):
             [Salida esperada]
             Texto corto en segunda persona, amable y natural, listo para ser reproducido por el sintetizador de voz.
             """
+            print("\n\nSALIDA :\n")
+            print(response.text)
+            print("---------------------------FIN CHAT INTERACTIVO-----------------------------------")
 
             if len(palabras) > 60:
                 response_model = model.generate_content(sumary_prompt)
